@@ -23,6 +23,7 @@ st.markdown(
 # ---------------------------------------------------------------------
 st.set_page_config(layout="wide")
 st.title("CFTC Commitment of Traders Dashboard")
+st.subheader("Disaggregated Futures & Options Combined")
 
 
 # ---------------------------------------------------------------------
