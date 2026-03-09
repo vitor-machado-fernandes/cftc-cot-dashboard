@@ -1,14 +1,15 @@
 import pandas as pd
 import streamlit as st
 from pathlib import Path
+import plotly.graph_objects as go
 
 
 COMMODITY_SHEETS = {
     "Corn": "Corn",
     "Cotton": "Cotton",
     "Soybeans": "Soybeans",
-    "SBM": "Soybean Meal",
-    "SBO": "Soybean Oil"
+    "SBM": "SBM",
+    "SBO": "SBO"
 }
 
 TRADER_MAP = {
@@ -140,9 +141,9 @@ def build_position_df(df, long_col, short_col, spread_col):
         out["spread"] = pd.NA
 
     out["net"] = out["long"] - out["short"]
-    out["month_day"] = out["report_date"].dt.strftime("%m-%d")
+    out["week_of_year"] = ((out["report_date"].dt.dayofyear - 1) // 7) + 1
 
-    return out[["report_date", "year", "month_day", "long", "short", "spread", "net"]].sort_values("report_date")
+    return out[["report_date", "year", "week_of_year", "long", "short", "spread", "net"]].sort_values("report_date")
 
 
 def get_available_years(pos_df):
@@ -174,9 +175,10 @@ def build_reference_band(pos_df, value_col):
         return None
 
     band = (
-        ref.groupby("month_day")[value_col]
+        ref.groupby("week_of_year")[value_col]
         .agg(ref_min="min", ref_max="max", ref_avg="mean")
         .reset_index()
+        .sort_values("week_of_year")
     )
 
     return band
@@ -189,11 +191,44 @@ def filter_years(pos_df, selected_years):
     return pos_df[pos_df["year"].isin(selected_years)].copy()
 
 
+def build_net_table(df, crop):
+    trader_list = ["PMPU", "Swap Dealer", "Managed Money", "Other", "Non-Reportables"]
+
+    out = None
+
+    for trader in trader_list:
+
+        long_col, short_col, _ = resolve_position_columns(df, trader, crop)
+
+        if long_col is None or short_col is None:
+            continue
+
+        tmp = df.copy()
+
+        tmp["date"] = pd.to_datetime(tmp["report_date_as_yyyy_mm_dd"], errors="coerce")
+
+        long_vals = pd.to_numeric(tmp[long_col], errors="coerce")
+        short_vals = pd.to_numeric(tmp[short_col], errors="coerce")
+
+        tmp[trader] = long_vals - short_vals
+
+        tmp = tmp[["date", trader]]
+
+        if out is None:
+            out = tmp
+        else:
+            out = out.merge(tmp, on="date", how="outer")
+
+    return out.sort_values("date")
+
+
+
+
 def render_position():
     
     st.header("CFTC Positions")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap = "small")
 
     commodity = col1.selectbox(
         "Commodity",
@@ -214,6 +249,8 @@ def render_position():
     )
 
     df = load_commodity_df(commodity)
+
+    net_table = build_net_table(df, crop)
 
     long_col, short_col, spread_col = resolve_position_columns(df, trader, crop)
 
@@ -241,20 +278,214 @@ def render_position():
     
     plot_df = filter_years(pos_df, selected_years)
 
+    ###
+    st.subheader("Net Positions by Trader Type")
+
+    display_df = net_table.sort_values("date", ascending=False)
+
+    display_df["date"] = display_df["date"].dt.strftime("%Y-%m-%d")
+
+    num_cols = display_df.columns.drop("date")
+
+    display_df[num_cols] = display_df[num_cols].applymap(
+        lambda x: f"{int(x):,}" if pd.notnull(x) else ""
+    )
+
+    left, center, right = st.columns([1, 6, 1])
+
+    with center:
+        st.dataframe(
+            display_df,
+            height=200,
+            use_container_width=True
+        )
+
+    ###
+    
+    st.subheader("Charts")
+
     net_band = build_reference_band(pos_df, "net") if (show_avg or show_band) else None
     long_band = build_reference_band(pos_df, "long") if (show_avg or show_band) else None
     short_band = build_reference_band(pos_df, "short") if (show_avg or show_band) else None
     spread_band = build_reference_band(pos_df, "spread") if (show_avg or show_band) else None
 
-    st.write("Selected years:", selected_years)
-    st.write("Recent 5 completed years used for reference:", get_recent_5_completed_years(pos_df))
+    color_map = get_year_color_map(selected_years)
 
-    st.write("Filtered plot df:")
-    st.dataframe(plot_df.head(10))
+    long_short_range = get_combined_range(plot_df, ["long", "short"])
+
+    fig_net = plot_seasonal_series(
+        plot_df=plot_df,
+        selected_years=selected_years,
+        value_col="net",
+        title="Net Position",
+        show_avg=show_avg,
+        show_band=show_band,
+        ref_band=net_band,
+        color_map=color_map,
+        show_legend=True
+    )
+
+    fig_long = plot_seasonal_series(
+        plot_df=plot_df,
+        selected_years=selected_years,
+        value_col="long",
+        title="Long Position",
+        show_avg=show_avg,
+        show_band=show_band,
+        ref_band=long_band,
+        color_map=color_map,
+        yaxis_range=long_short_range,
+        show_legend=False
+    )
+
+    fig_short = plot_seasonal_series(
+        plot_df=plot_df,
+        selected_years=selected_years,
+        value_col="short",
+        title="Short Position",
+        show_avg=show_avg,
+        show_band=show_band,
+        ref_band=short_band,
+        color_map=color_map,
+        yaxis_range=long_short_range,
+        show_legend=False
+    )
+
+    st.plotly_chart(fig_net, use_container_width=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.plotly_chart(fig_long, use_container_width=True)
+
+    with col2:
+        st.plotly_chart(fig_short, use_container_width=True)
+
+    with col3:
+        if plot_df["spread"].dropna().empty:
+            st.info("No spread data for this trader type.")
+        else:
+            fig_spread = plot_seasonal_series(
+                plot_df=plot_df,
+                selected_years=selected_years,
+                value_col="spread",
+                title="Spread Position",
+                show_avg=show_avg,
+                show_band=show_band,
+                ref_band=spread_band,
+                color_map=color_map,
+                show_legend=False
+            )
+            st.plotly_chart(fig_spread, use_container_width=True)
 
 
-    if net_band is not None:
-        st.write("Net reference band preview:")
-        st.dataframe(net_band.head(10))
+def get_year_color_map(selected_years):
+    palette = [
+        "#1f77b4", "#d62728", "#2ca02c", "#ff7f0e", "#9467bd",
+        "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+    ]
+    return {y: palette[i % len(palette)] for i, y in enumerate(sorted(selected_years))}
 
 
+
+
+def plot_seasonal_series(
+    plot_df,
+    selected_years,
+    value_col,
+    title,
+    show_avg=False,
+    show_band=False,
+    ref_band=None,
+    color_map=None,
+    yaxis_range=None,
+    show_legend=True
+):
+    fig = go.Figure()
+
+    if color_map is None:
+        color_map = get_year_color_map(selected_years)
+
+    if show_band and ref_band is not None and not ref_band.empty:
+        fig.add_trace(go.Scatter(
+            x=ref_band["week_of_year"],
+            y=ref_band["ref_max"],
+            mode="lines",
+            line=dict(width=0),
+            showlegend=False,
+            hoverinfo="skip"
+        ))
+        fig.add_trace(go.Scatter(
+            x=ref_band["week_of_year"],
+            y=ref_band["ref_min"],
+            mode="lines",
+            line=dict(width=0),
+            fill="tonexty",
+            fillcolor="rgba(160,160,160,0.25)",
+            name="5Y Min/Max",
+            showlegend=show_legend,
+            hoverinfo="skip"
+        ))
+
+    if show_avg and ref_band is not None and not ref_band.empty:
+        fig.add_trace(go.Scatter(
+            x=ref_band["week_of_year"],
+            y=ref_band["ref_avg"],
+            mode="lines",
+            name="5Y Avg",
+            showlegend=show_legend,
+            line=dict(color="black", dash="dash", width=2)
+        ))
+
+    for year in sorted(selected_years):
+        tmp = plot_df[plot_df["year"] == year].dropna(subset=[value_col]).copy()
+        if tmp.empty:
+            continue
+
+        fig.add_trace(go.Scatter(
+            x=tmp["week_of_year"],
+            y=tmp[value_col],
+            mode="lines",
+            name=str(year),
+            showlegend=show_legend,
+            line=dict(color=color_map[year], width=2)
+        ))
+
+    fig.update_layout(
+        title=title,
+        height=260,
+        margin=dict(l=5, r=5, t=35, b=10),
+        xaxis=dict(
+            title="",
+            tickmode="array",
+            tickvals=[1, 5, 9, 14, 18, 22, 27, 31, 36, 40, 44, 49],
+            ticktext=["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            range=[1, 53]
+        ),
+        yaxis=dict(
+            title="Contracts",
+            range=yaxis_range
+        ),
+        legend_title=""
+    )
+
+    return fig
+
+def get_combined_range(plot_df, cols):
+    vals = []
+    for c in cols:
+        if c in plot_df.columns:
+            vals.extend(pd.to_numeric(plot_df[c], errors="coerce").dropna().tolist())
+
+    if not vals:
+        return None
+
+    vmin = min(vals)
+    vmax = max(vals)
+
+    if vmin == vmax:
+        pad = max(abs(vmin) * 0.05, 1)
+    else:
+        pad = (vmax - vmin) * 0.08
+
+    return [vmin - pad, vmax + pad]
