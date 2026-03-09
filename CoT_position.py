@@ -228,32 +228,52 @@ def render_position():
     
     st.header("CFTC Positions")
 
-    col1, col2, col3 = st.columns(3, gap = "small")
-
-    commodity = col1.selectbox(
+    # ---- TOP: commodity only ----
+    commodity = st.selectbox(
         "Commodity",
         ["Corn", "Cotton", "Soybeans", "SBM", "SBO"],
         key="position_commodity"
     )
 
-    trader = col2.selectbox(
+    df = load_commodity_df(commodity)
+
+    # ---- TABLE ----
+    net_table = build_net_table(df, crop="All")   # or keep your preferred crop logic
+
+    st.markdown("### <center>Net Positions by Trader Type</center>", unsafe_allow_html=True)
+
+    display_df = net_table.sort_values("date", ascending=False).copy()
+    display_df["date"] = display_df["date"].dt.strftime("%Y-%m-%d")
+
+    num_cols = display_df.columns.drop("date")
+    display_df[num_cols] = display_df[num_cols].applymap(
+        lambda x: f"{int(x):,}" if pd.notnull(x) else ""
+    )
+
+    left, center, right = st.columns([1, 3, 1])
+    with center:
+        st.dataframe(
+            display_df,
+            height=200,
+            use_container_width=True
+        )
+
+    # ---- BELOW TABLE: remaining controls ----
+    col1, col2 = st.columns(2)
+
+    trader = col1.selectbox(
         "Trader Type",
         ["PMPU", "Swap Dealer", "Managed Money", "Other", "Non-Reportables"],
         key="position_trader"
     )
 
-    crop = col3.selectbox(
+    crop = col2.selectbox(
         "Crop Year",
         ["All", "Old", "Other"],
         key="position_crop"
     )
 
-    df = load_commodity_df(commodity)
-
-    net_table = build_net_table(df, crop)
-
     long_col, short_col, spread_col = resolve_position_columns(df, trader, crop)
-
     pos_df = build_position_df(df, long_col, short_col, spread_col)
 
     available_years = get_available_years(pos_df)
@@ -262,45 +282,17 @@ def render_position():
         "Years",
         available_years,
         default=available_years[-3:] if len(available_years) >= 3 else available_years,
-        key="position_years")
-    
-    col_a, col_b = st.columns(2)
-
-    show_avg = col_a.checkbox(
-        "5Y average",
-        value=False,
-        key="position_show_avg")
-    
-    show_band = col_b.checkbox(
-        "5Y min/max",
-        value=False,
-        key="position_show_band")
-    
-    plot_df = filter_years(pos_df, selected_years)
-
-    ###
-    st.subheader("Net Positions by Trader Type")
-
-    display_df = net_table.sort_values("date", ascending=False)
-
-    display_df["date"] = display_df["date"].dt.strftime("%Y-%m-%d")
-
-    num_cols = display_df.columns.drop("date")
-
-    display_df[num_cols] = display_df[num_cols].applymap(
-        lambda x: f"{int(x):,}" if pd.notnull(x) else ""
+        key="position_years"
     )
 
-    left, center, right = st.columns([1, 6, 1])
+    col_a, col_b = st.columns(2)
 
-    with center:
-        st.dataframe(
-            display_df,
-            height=200,
-            use_container_width=True
-        )
+    show_avg = col_a.checkbox("5Y average", value=False, key="position_show_avg")
+    show_band = col_b.checkbox("5Y min/max", value=False, key="position_show_band")
 
-    ###
+    # ...rest of chart code...
+    
+    plot_df = filter_years(pos_df, selected_years)
     
     st.subheader("Charts")
 
