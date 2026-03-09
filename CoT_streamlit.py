@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import plotly.express as px
+from CoT_position import render_position
 
 st.markdown(
     """
@@ -56,7 +57,7 @@ if "cot_update_ran" not in st.session_state:
 # ------------------------------------------------
 page = st.sidebar.radio(
     "Select section",
-    ["Open Interest", "On-Call"] # later add: , "Position", "Concentration", etc]
+    ["Open Interest", "On-Call", "Position"] # later add: "Concentration", etc]
 )
 
 # ------------------------------------------------
@@ -64,5 +65,8 @@ page = st.sidebar.radio(
 # ------------------------------------------------
 if page == "Open Interest":
     render_open_interest()
+elif page == "Position":
+    render_position()
 elif page == "On-Call":
     render_on_call()
+

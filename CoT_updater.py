@@ -14,7 +14,7 @@ LIMIT = 50000
 # Configure your workbooks and sheet -> market mappings here
 FILES = {
     "CoT_Disagg_FutsOnly.xlsx": {
-        "dataset_id": "6dca-aqww",
+        "dataset_id": "72hh-3qpy",
         "sheets": {
             "Corn": "CORN - CHICAGO BOARD OF TRADE",
             "Cotton": "COTTON NO. 2 - ICE FUTURES U.S.",

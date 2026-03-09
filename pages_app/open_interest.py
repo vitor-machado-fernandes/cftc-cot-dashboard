@@ -373,7 +373,7 @@ def render_open_interest():
     - **Futures Only**  
     - **Futures + Options**  
     The options O.I. is the estimated sum of the deltas of all outstanding options. 
-    From these two reports it is possible to extract the 'Option Only' open interest.  
+    From these two reports it is possible to extract the 'Options Only' open interest.  
     """)
 
     # ---- Controls
@@ -410,5 +410,6 @@ def render_open_interest():
     - **Other** = New Crop(s)  
     - **All** = old + new crop
              """)
+    
 
     render_oi_matrix(df_futs, df_opt, df_fno, years)
