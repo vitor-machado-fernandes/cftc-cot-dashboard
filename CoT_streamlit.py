@@ -29,6 +29,7 @@ st.title("CFTC Commitment of Traders Dashboard")
 from CoT_updater import run_update_check
 from pages_app.open_interest import render_open_interest
 from pages_app.on_call import render_on_call
+from pages_app.n_traders import render_n_traders
 
 # ------------------------------------------------
 # Run updater once per session
@@ -57,7 +58,7 @@ if "cot_update_ran" not in st.session_state:
 # ------------------------------------------------
 page = st.sidebar.radio(
     "Select section",
-    ["Open Interest", "On-Call", "Position"] # later add: "Concentration", etc]
+    ["Open Interest", "On-Call", "Position", "Number of Traders"] # later add: "Concentration", etc]
 )
 
 # ------------------------------------------------
@@ -69,4 +70,6 @@ elif page == "Position":
     render_position()
 elif page == "On-Call":
     render_on_call()
+elif page == "Number of Traders":
+    render_n_traders()
 

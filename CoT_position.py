@@ -237,6 +237,31 @@ def render_position():
 
     df = load_commodity_df(commodity)
 
+    st.write("""
+    Generally, the data in the COT reports is from Tuesday and released Friday.           
+
+    The COT reports are based on position data supplied by reporting firms (FCMs, clearing members, foreign brokers and exchanges). 
+    While the position data is supplied by reporting firms, the actual trader category or classification is based on the predominant business purpose
+     self-reported by traders on the CFTC Form 40 and is subject to review by CFTC staff for reasonableness.
+
+    The CFTC will classify each reportable trader as one of the below categories:  
+    - **Producer/Merchant/Processor/User (PMPU)**: A “producer/merchant/processor/user” is an entity that predominantly engages in the production, processing,
+     packing or handling of a physical commodity and uses the futures markets to manage or hedge risks associated with those activities.
+    - **Swap Dealer**: A “swap dealer” is an entity that deals primarily in swaps for a commodity and uses the futures markets to manage or hedge the risk associated with those swaps transactions. The swap
+    dealer’s counterparties may be speculative traders, like hedge funds, or traditional commercial clients that are managing risk arising from their dealings in the physical commodity.
+    - **Money Manager**: A “money manager” is a registered commodity trading advisor (CTA); a registered commodity pool operator (CPO); or an unregistered fund
+    identified by CFTC. These traders are engaged in managing and conducting organized futures trading on behalf of clients.
+    - **Other Reportables**: Every other reportable trader that is not placed into one of the other three categories is placed into the “other reportables” category. 
+    
+    Quick mental model for CoT:  
+    Category------------Real economic meaning  
+    PMPU:---------------Physical hedgers (producers, merchants, processors)  
+    Swap Dealers:-----OTC intermediaries hedging swaps  
+    Managed Money:-Hedge funds / CTAs  
+    Other:---------------Misc. reportables  
+    Non-reportables:-Retail / small         
+    """)
+
     # ---- TABLE ----
     net_table = build_net_table(df, crop="All")   # or keep your preferred crop logic
 
@@ -272,6 +297,8 @@ def render_position():
         ["All", "Old", "Other"],
         key="position_crop"
     )
+    st.subheader("Position Visualized")
+
 
     long_col, short_col, spread_col = resolve_position_columns(df, trader, crop)
     pos_df = build_position_df(df, long_col, short_col, spread_col)
@@ -293,8 +320,7 @@ def render_position():
     # ...rest of chart code...
     
     plot_df = filter_years(pos_df, selected_years)
-    
-    st.subheader("Charts")
+
 
     net_band = build_reference_band(pos_df, "net") if (show_avg or show_band) else None
     long_band = build_reference_band(pos_df, "long") if (show_avg or show_band) else None
