@@ -1,100 +1,84 @@
-# n_traders.py
-
+import streamlit as st
 import pandas as pd
 import plotly.express as px
-import streamlit as st
+
+from pathlib import Path
+from CoT_position import load_commodity_df, COMMODITY_SHEETS
 
 
-def _prepare_trader_participation(df: pd.DataFrame, report_type: str) -> pd.DataFrame:
-    """
-    Prepare long-format dataframe for trader participation over time.
-    
-    report_type options:
-    - 'Futures Only'
-    - 'Futures + Options'
-    - 'Both'
-    """
+def _prepare_trader_participation(df: pd.DataFrame, futs_only: bool):
 
-    data = df.copy()
+    if futs_only:
 
-    # Adjust this if your date column has a different name
-    data["date"] = pd.to_datetime(data["Report_Date_as_YYYY-MM-DD"])
+        cols = {
+            "Total": "traders_tot_old",
+            "Producer/Merchant": "traders_prod_merc_long_old",
+            "Swap Dealers": "traders_swap_long_old",
+            "Managed Money": "traders_m_money_long_old",
+            "Other Reportables": "traders_other_rept_long_old",
+        }
 
-    fut_only_cols = {
-        "Producer/Merchant": "traders_prod_merc_long_old",
-        "Swap Dealers": "traders_swap_long_old",
-        "Managed Money": "traders_m_money_long_old",
-        "Other Reportables": "traders_other_rept_long_old",
-    }
+    else:
 
-    fut_opt_cols = {
-        "Producer/Merchant": "traders_prod_merc_long_all",
-        "Swap Dealers": "traders_swap_long_all",
-        "Managed Money": "traders_m_money_long_all",
-        "Other Reportables": "traders_other_rept_long_all",
-    }
+        cols = {
+            "Total": "traders_tot_all",
+            "Producer/Merchant": "traders_prod_merc_long_all",
+            "Swap Dealers": "traders_swap_long_all",
+            "Managed Money": "traders_m_money_long_all",
+            "Other Reportables": "traders_other_rept_long_all",
+        }
 
-    frames = []
+    data = df[["report_date"] + list(cols.values())].rename(columns=cols)
 
-    if report_type in ["Futures Only", "Both"]:
-        tmp = data[["date"] + list(fut_only_cols.values())].rename(columns=fut_only_cols)
-        tmp = tmp.melt(id_vars="date", var_name="Category", value_name="Traders")
-        tmp["Report"] = "Futures Only"
-        frames.append(tmp)
-
-    if report_type in ["Futures + Options", "Both"]:
-        tmp = data[["date"] + list(fut_opt_cols.values())].rename(columns=fut_opt_cols)
-        tmp = tmp.melt(id_vars="date", var_name="Category", value_name="Traders")
-        tmp["Report"] = "Futures + Options"
-        frames.append(tmp)
-
-    out = pd.concat(frames, ignore_index=True)
-    out = out.dropna(subset=["Traders"])
-    return out
-
-
-def render_n_traders(df: pd.DataFrame):
-    st.subheader("Number of Traders")
-
-    report_type = st.selectbox(
-        "Report Type",
-        ["Futures Only", "Futures + Options", "Both"],
-        index=0,
-        key="ntraders_report_type"
+    long_df = data.melt(
+        id_vars="report_date",
+        var_name="Category",
+        value_name="Traders"
     )
 
-    chart_df = _prepare_trader_participation(df, report_type)
+    return long_df
 
-    if chart_df.empty:
-        st.warning("No data available for this selection.")
-        return
 
-    if report_type == "Both":
-        fig = px.line(
-            chart_df,
-            x="date",
-            y="Traders",
-            color="Category",
-            line_dash="Report",
-            labels={"date": "", "Traders": "Number of Traders"},
-        )
-    else:
-        fig = px.line(
-            chart_df,
-            x="date",
-            y="Traders",
-            color="Category",
-            labels={"date": "", "Traders": "Number of Traders"},
-        )
+def render_n_traders():
+
+    st.title("Number of Traders")
+
+    # --- Commodity selector ---
+    commodity = st.selectbox(
+        "Commodity",
+        list(COMMODITY_SHEETS.keys()),
+        key="ntraders_commodity"
+    )
+
+    # --- Report type ---
+    report_type = st.radio(
+        "Report Type",
+        ["Futures Only", "Futures + Options"],
+        horizontal=True,
+        key="ntraders_report"
+    )
+
+    futs_only = report_type == "Futures Only"
+
+    df = load_commodity_df(commodity, futs_only)
+
+    chart_df = _prepare_trader_participation(df, futs_only)
+
+    fig = px.line(
+        chart_df,
+        x="report_date",
+        y="Traders",
+        color="Category"
+    )
 
     fig.update_layout(
-        height=500,
-        margin=dict(l=20, r=20, t=20, b=20),
-        legend_title_text="",
+        height=550,
+        margin=dict(l=10, r=10, t=10, b=10),
         xaxis_title="",
         yaxis_title="Number of Traders",
+        legend_title=""
     )
 
-    fig.update_traces(mode="lines", line=dict(width=2))
+    fig.update_traces(line=dict(width=2))
 
     st.plotly_chart(fig, use_container_width=True)
