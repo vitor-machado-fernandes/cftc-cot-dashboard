@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import plotly.express as px
-from CoT_position import render_position
 
 st.markdown(
     """
@@ -30,6 +29,7 @@ from CoT_updater import run_update_check
 from pages_app.open_interest import render_open_interest
 from pages_app.on_call import render_on_call
 from pages_app.n_traders import render_n_traders
+from pages_app.CoT_position import render_position
 
 # ------------------------------------------------
 # Run updater once per session
