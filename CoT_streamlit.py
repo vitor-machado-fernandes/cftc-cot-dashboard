@@ -30,6 +30,7 @@ from pages_app.open_interest import render_open_interest
 from pages_app.on_call import render_on_call
 from pages_app.n_traders import render_n_traders
 from pages_app.CoT_position import render_position
+from pages_app.concentration import render_concentration
 
 # ------------------------------------------------
 # Run updater once per session
@@ -58,18 +59,20 @@ if "cot_update_ran" not in st.session_state:
 # ------------------------------------------------
 page = st.sidebar.radio(
     "Select section",
-    ["Open Interest", "On-Call", "Position", "Number of Traders"] # later add: "Concentration", etc]
+    ["Open Interest", "On-Call", "Position", "Number of Traders", "Concentration"]
 )
 
 # ------------------------------------------------
 # ---- Route to sub-app ----
 # ------------------------------------------------
-if page == "Open Interest":
-    render_open_interest()
-elif page == "Position":
+if page == "Position":
     render_position()
+elif page == "Open Interest":
+    render_open_interest()
 elif page == "On-Call":
     render_on_call()
 elif page == "Number of Traders":
     render_n_traders()
+elif page == "Concentration":
+    render_concentration()
 
