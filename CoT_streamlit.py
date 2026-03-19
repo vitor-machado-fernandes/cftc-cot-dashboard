@@ -32,6 +32,31 @@ from pages_app.n_traders import render_n_traders
 from pages_app.CoT_position import render_position
 from pages_app.concentration import render_concentration
 
+
+def render_home():
+    st.header("Home")
+    st.write(
+        """
+        The Commitment of Traders (CoT) report is a weekly CFTC publication that shows how different types of market participants are positioned in futures and options markets.
+
+        Traders are grouped into categories such as producers, swap dealers, managed money, other reportables, and non-reportables. Looking at those groups over time helps us understand positioning, participation, hedging pressure, and market structure.
+        """
+    )
+
+    st.markdown(
+        """
+        **Sections**
+
+        - `Concentration`: Shows how concentrated long and short exposure is among the largest traders.
+        - `Number of Traders`: Tracks how many traders are active on the long, short, and spread sides.
+        - `On-Call`: Focuses on cotton on-call activity, including unfixed sales and purchases.
+        - `Open Interest`: Explores open interest trends and seasonal patterns.
+        - `Position`: Displays long, short, spread, and net positioning by trader category.
+        """
+    )
+
+    st.caption("Use the sidebar to navigate between sections.")
+
 # ------------------------------------------------
 # Run updater once per session
 # ------------------------------------------------
@@ -105,13 +130,15 @@ if "on_call_update_ran" not in st.session_state:
 # ------------------------------------------------
 page = st.sidebar.radio(
     "Select section",
-    ["Open Interest", "On-Call", "Position", "Number of Traders", "Concentration"]
+    ["Home", "Concentration", "Number of Traders", "On-Call", "Open Interest", "Position"]
 )
 
 # ------------------------------------------------
 # ---- Route to sub-app ----
 # ------------------------------------------------
-if page == "Position":
+if page == "Home":
+    render_home()
+elif page == "Position":
     render_position()
 elif page == "Open Interest":
     render_open_interest()

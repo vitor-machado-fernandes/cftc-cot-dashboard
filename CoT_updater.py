@@ -21,6 +21,7 @@ FILES = {
             "Soybeans": "SOYBEANS - CHICAGO BOARD OF TRADE",
             "SBO": "SOYBEAN OIL - CHICAGO BOARD OF TRADE",
             "SBM": "SOYBEAN MEAL - CHICAGO BOARD OF TRADE",
+            "Wheat": "WHEAT-SRW - CHICAGO BOARD OF TRADE",
         },
     },
     "CoT_Disagg_FnO.xlsx": {
@@ -31,6 +32,7 @@ FILES = {
             "Soybeans": "SOYBEANS - CHICAGO BOARD OF TRADE",
             "SBO": "SOYBEAN OIL - CHICAGO BOARD OF TRADE",
             "SBM": "SOYBEAN MEAL - CHICAGO BOARD OF TRADE",
+            "Wheat": "WHEAT-SRW - CHICAGO BOARD OF TRADE",
         },
     },
 }

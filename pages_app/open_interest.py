@@ -21,6 +21,7 @@ COMMODITY_SHEETS = {
     "Soybeans": "Soybeans",
     "SBO": "SBO",
     "SBM": "SBM",
+    "Wheat - SRW": "Wheat",
 }
 
 OI_COLS = [

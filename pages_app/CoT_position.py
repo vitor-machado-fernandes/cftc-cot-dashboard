@@ -9,7 +9,8 @@ COMMODITY_SHEETS = {
     "Cotton": "Cotton",
     "Soybeans": "Soybeans",
     "SBM": "SBM",
-    "SBO": "SBO"
+    "SBO": "SBO",
+    "Wheat - SRW": "Wheat",
 }
 
 TRADER_MAP = {
@@ -231,7 +232,7 @@ def render_position():
     # ---- TOP: commodity only ----
     commodity = st.selectbox(
         "Commodity",
-        ["Corn", "Cotton", "Soybeans", "SBM", "SBO"],
+        list(COMMODITY_SHEETS.keys()),
         key="position_commodity"
     )
 
