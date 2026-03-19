@@ -55,6 +55,52 @@ if "cot_update_ran" not in st.session_state:
 
 
 # ------------------------------------------------
+# Run cotton on-call updater once per session
+# ------------------------------------------------
+if "on_call_update_ran" not in st.session_state:
+    st.session_state["on_call_update_ran"] = True
+
+    with st.spinner("Checking for cotton on-call updates..."):
+        try:
+            try:
+                from cotton_on_call_updater import build_cotton_on_call_parquet
+            except ModuleNotFoundError as e:
+                missing_module = getattr(e, "name", None) or "a scraper dependency"
+                st.info(
+                    f"Cotton on-call auto-update skipped because `{missing_module}` is not installed in this Streamlit environment."
+                )
+                build_cotton_on_call_parquet = None
+
+            if build_cotton_on_call_parquet is not None:
+                try:
+                    on_call_result = build_cotton_on_call_parquet(
+                        data_dir=".",
+                        force=False,
+                    )
+                except Exception:
+                    # Work-PC fallback when Python HTTPS/proxy handling blocks a normal request.
+                    on_call_result = build_cotton_on_call_parquet(
+                        data_dir=".",
+                        force=False,
+                        trust_env=False,
+                        verify=False,
+                    )
+
+                if on_call_result["report_count_fetched"] > 0:
+                    st.success(
+                        f"Cotton on-call parquet updated through {on_call_result['latest_report_date']}."
+                    )
+                    if on_call_result["errors"]:
+                        st.warning(
+                            f"Cotton on-call update completed with {len(on_call_result['errors'])} parsing gaps."
+                        )
+                else:
+                    st.info("Cotton on-call parquet already up to date.")
+        except Exception as e:
+            st.warning(f"Cotton on-call update check failed: {e}")
+
+
+# ------------------------------------------------
 # ---- Sidebar navigation ----
 # ------------------------------------------------
 page = st.sidebar.radio(

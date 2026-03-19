@@ -3,3 +3,6 @@ pandas
 plotly
 openpyxl
 xlsxwriter
+requests
+beautifulsoup4
+pyarrow
