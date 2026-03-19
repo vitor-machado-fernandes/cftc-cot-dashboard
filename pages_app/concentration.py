@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from pages_app.CoT_position import COMMODITY_SHEETS, load_commodity_df
+from pages_app.CoT_position import COMMODITY_SHEETS, load_commodity_df, resolve_position_columns
 
 
 LONG_4_COL_CANDIDATES = [
@@ -21,6 +21,22 @@ SHORT_8_COL_CANDIDATES = [
     "conc_net_le_8_tdr_short_all",
     "conc_net_le_8_ldr_short_all",
 ]
+
+TRADER_ORDER = [
+    "PMPU",
+    "Swap Dealer",
+    "Managed Money",
+    "Other",
+    "Non-Reportables",
+]
+
+TRADER_COLORS = {
+    "PMPU": "#7CC7FF",
+    "Swap Dealer": "#6ED3B6",
+    "Managed Money": "#FDBA74",
+    "Other": "#C4B5FD",
+    "Non-Reportables": "#FDA4AF",
+}
 
 
 def _clean_numeric(series: pd.Series) -> pd.Series:
@@ -70,6 +86,47 @@ def _prepare_concentration_df(df: pd.DataFrame) -> pd.DataFrame:
             "short_concentration_8",
         ]
     ].sort_values("report_date")
+
+
+def _prepare_net_pct_oi_df(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+
+    if "report_date" not in out.columns and "report_date_as_yyyy_mm_dd" in out.columns:
+        out["report_date"] = pd.to_datetime(out["report_date_as_yyyy_mm_dd"], errors="coerce")
+    else:
+        out["report_date"] = pd.to_datetime(out["report_date"], errors="coerce")
+
+    out = out.dropna(subset=["report_date"]).copy()
+    out["year"] = out["report_date"].dt.year
+
+    oi_col = _resolve_column(out, ["open_interest_all", "open_interest"])
+    out["open_interest_all"] = _clean_numeric(out[oi_col]) if oi_col else pd.NA
+
+    result_cols = ["report_date", "year", "open_interest_all"]
+
+    for trader in TRADER_ORDER:
+        long_col, short_col, _ = resolve_position_columns(out, trader, "All")
+        trader_key = trader.lower().replace(" ", "_").replace("-", "_")
+
+        long_vals = (
+            _clean_numeric(out[long_col])
+            if long_col
+            else pd.Series(float("nan"), index=out.index, dtype="float64")
+        )
+        short_vals = (
+            _clean_numeric(out[short_col])
+            if short_col
+            else pd.Series(float("nan"), index=out.index, dtype="float64")
+        )
+        net_vals = long_vals - short_vals
+
+        out[f"{trader_key}_net"] = net_vals
+        out[f"{trader_key}_pct_oi"] = (
+            net_vals.div(out["open_interest_all"]).where(out["open_interest_all"] != 0) * 100
+        )
+        result_cols.extend([f"{trader_key}_net", f"{trader_key}_pct_oi"])
+
+    return out[result_cols].sort_values("report_date")
 
 
 def _get_percent_axis_config(df_plot: pd.DataFrame) -> tuple[str, str]:
@@ -146,6 +203,95 @@ def _build_side_figure(
     return fig
 
 
+def _build_net_pct_oi_figure(
+    df_plot: pd.DataFrame,
+    commodity: str,
+    report_type: str,
+) -> go.Figure:
+    fig = go.Figure()
+
+    for trader in TRADER_ORDER:
+        trader_key = trader.lower().replace(" ", "_").replace("-", "_")
+        pct_col = f"{trader_key}_pct_oi"
+        net_col = f"{trader_key}_net"
+
+        if pct_col not in df_plot.columns:
+            continue
+
+        pct_vals = pd.to_numeric(df_plot[pct_col], errors="coerce")
+        if pct_vals.dropna().empty:
+            continue
+
+        customdata = pd.DataFrame(
+            {
+                "net": pd.to_numeric(df_plot[net_col], errors="coerce"),
+                "pct": pct_vals,
+            }
+        ).to_numpy()
+
+        fig.add_trace(
+            go.Scatter(
+                x=df_plot["report_date"],
+                y=pct_vals.clip(lower=0),
+                mode="lines",
+                name=trader,
+                stackgroup="positive",
+                line=dict(width=1.6, color=TRADER_COLORS[trader], shape="spline", smoothing=0.65),
+                fillcolor=TRADER_COLORS[trader],
+                customdata=customdata,
+                hovertemplate=(
+                    "%{x|%Y-%m-%d}<br>"
+                    f"{trader}: "
+                    "%{customdata[0]:,.0f} contracts"
+                    "<br>% of OI: %{customdata[1]:.2f}%"
+                    "<extra></extra>"
+                ),
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=df_plot["report_date"],
+                y=pct_vals.clip(upper=0),
+                mode="lines",
+                name=trader,
+                stackgroup="negative",
+                line=dict(width=1.6, color=TRADER_COLORS[trader], shape="spline", smoothing=0.65),
+                fillcolor=TRADER_COLORS[trader],
+                customdata=customdata,
+                hovertemplate=(
+                    "%{x|%Y-%m-%d}<br>"
+                    f"{trader}: "
+                    "%{customdata[0]:,.0f} contracts"
+                    "<br>% of OI: %{customdata[1]:.2f}%"
+                    "<extra></extra>"
+                ),
+                showlegend=False,
+            )
+        )
+
+    fig.update_layout(
+        title=f"{commodity} Net Position as % of Open Interest ({report_type})",
+        height=430,
+        margin=dict(l=20, r=20, t=60, b=20),
+        hovermode="x unified",
+        template="plotly_white",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        paper_bgcolor="#FAF7F2",
+        plot_bgcolor="#FFFDF9",
+        yaxis=dict(
+            title="% of Open Interest",
+            ticksuffix="%",
+            gridcolor="rgba(148, 163, 184, 0.18)",
+            zeroline=False,
+        ),
+        xaxis=dict(title=""),
+    )
+    fig.update_xaxes(gridcolor="rgba(148, 163, 184, 0.10)")
+    fig.add_hline(y=0, line_color="rgba(71, 85, 105, 0.55)", line_width=1.2)
+
+    return fig
+
+
 def render_concentration():
     st.title("Concentration")
 
@@ -163,8 +309,9 @@ def render_concentration():
     )
 
     futs_only = report_type == "Futures Only"
-    df = load_commodity_df(commodity, futs_only)
-    df = _prepare_concentration_df(df)
+    raw_df = load_commodity_df(commodity, futs_only)
+    df = _prepare_concentration_df(raw_df)
+    df_net_pct = _prepare_net_pct_oi_df(raw_df)
 
     if df.empty:
         st.warning("No concentration data is available for this selection.")
@@ -183,10 +330,6 @@ def render_concentration():
         )
         return
 
-    st.caption(
-        "This view tracks concentration over time for the largest 4 and largest 8 traders on the long and short sides."
-    )
-
     years = sorted(df["year"].dropna().unique().tolist())
     min_year, max_year = int(min(years)), int(max(years))
 
@@ -199,12 +342,20 @@ def render_concentration():
         key="concentration_year_slider",
     )
 
+    st.subheader("How big are the top players?")
+    st.caption(
+        "This view tracks concentration over time for the largest 4 and largest 8 traders on the long and short sides.")
+
     start_year, end_year = selected_years
     df_plot = df[(df["year"] >= start_year) & (df["year"] <= end_year)].copy()
 
     if df_plot.empty:
         st.warning("No data for the selected year range.")
         return
+
+    df_net_pct_plot = df_net_pct[
+        (df_net_pct["year"] >= start_year) & (df_net_pct["year"] <= end_year)
+    ].copy()
 
     long_fig = _build_side_figure(
         df_plot=df_plot,
@@ -243,4 +394,18 @@ def render_concentration():
         metric_1.metric("Latest Long Top 4", f"{row['long_concentration_4']:.1f}%")
         metric_2.metric("Latest Long Top 8", f"{row['long_concentration_8']:.1f}%")
         metric_3.metric("Latest Short Top 4", f"{row['short_concentration_4']:.1f}%")
-        metric_4.metric("Latest Short Top 8", f"{row['short_concentration_8']:.1f}%")
+        metric_4.metric("Latest Short Top 8", f"{row['short_concentration_8']:.1f}%")    
+    
+    net_pct_cols = [f"{trader.lower().replace(' ', '_').replace('-', '_')}_pct_oi" for trader in TRADER_ORDER]
+    if not df_net_pct_plot.empty and not df_net_pct_plot[net_pct_cols].dropna(how="all").empty:
+        st.subheader("How big is each category in net terms?")
+        st.caption(
+            "Net position is calculated as long minus short for each trader category, then divided by total open interest. Spread positions are excluded."
+        )
+        net_pct_fig = _build_net_pct_oi_figure(
+            df_plot=df_net_pct_plot,
+            commodity=commodity,
+            report_type=report_type,
+        )
+        st.plotly_chart(net_pct_fig, use_container_width=True)
+
