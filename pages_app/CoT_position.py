@@ -229,14 +229,22 @@ def render_position():
     
     st.header("CFTC Positions")
 
-    # ---- TOP: commodity only ----
+    # ---- TOP: commodity + report type ----
     commodity = st.selectbox(
         "Commodity",
         list(COMMODITY_SHEETS.keys()),
         key="position_commodity"
     )
 
-    df = load_commodity_df(commodity)
+    report_type = st.radio(
+        "Report Type",
+        ["Futures Only", "Futures + Options"],
+        horizontal=True,
+        key="position_report_type",
+    )
+
+    futs_only = report_type == "Futures Only"
+    df = load_commodity_df(commodity, futs_only)
 
     st.write("""
     Generally, the data in the COT reports is from Tuesday and released Friday.           
