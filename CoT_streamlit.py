@@ -111,7 +111,7 @@ if "on_call_update_ran" not in st.session_state:
                         verify=False,
                     )
 
-                if on_call_result["report_count_fetched"] > 0:
+                if on_call_result.get("did_update"):
                     st.success(
                         f"Cotton on-call parquet updated through {on_call_result['latest_report_date']}."
                     )

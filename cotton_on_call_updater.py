@@ -212,7 +212,7 @@ def _append_and_dedupe(existing: pd.DataFrame, new_rows: pd.DataFrame) -> pd.Dat
 
     combined = _coerce_output_dtypes(combined)
     combined = combined.drop_duplicates(
-        subset=["report_date", "contract_month", "report_url"],
+        subset=["report_date", "contract_month"],
         keep="last",
     )
     combined = combined.sort_values(
@@ -264,6 +264,7 @@ def build_cotton_on_call_parquet(
     report_urls = _extract_report_links(index_response.text)
 
     existing = pd.DataFrame() if force else _read_existing_output(output_path)
+    existing_canonical = _append_and_dedupe(pd.DataFrame(), existing)
     existing_urls = set(existing["report_url"].dropna().astype(str)) if "report_url" in existing.columns else set()
 
     if force or existing.empty or "report_date" not in existing.columns:
@@ -281,8 +282,10 @@ def build_cotton_on_call_parquet(
                     recent_urls.append(url)
             target_urls = [url for url in recent_urls if force or url not in existing_urls]
 
-    if force or CURRENT_REPORT_URL not in existing_urls:
-        target_urls = [CURRENT_REPORT_URL] + target_urls
+    # The "current report" page is a rolling URL whose contents change weekly,
+    # so we must refresh it even if that URL already exists in the parquet.
+    target_urls = [CURRENT_REPORT_URL] + target_urls
+    target_urls = list(dict.fromkeys(target_urls))
 
     parsed_frames: list[pd.DataFrame] = []
     errors: list[str] = []
@@ -310,6 +313,7 @@ def build_cotton_on_call_parquet(
         "report_count_found": len(report_urls),
         "report_count_fetched": len(target_urls),
         "row_count_written": len(final_df),
+        "did_update": force or not final_df.equals(existing_canonical),
         "latest_report_date": (
             final_df["report_date"].max().date().isoformat() if not final_df.empty else None
         ),
