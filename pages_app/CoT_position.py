@@ -280,8 +280,8 @@ def render_position():
     display_df["date"] = display_df["date"].dt.strftime("%Y-%m-%d")
 
     num_cols = display_df.columns.drop("date")
-    display_df[num_cols] = display_df[num_cols].applymap(
-        lambda x: f"{int(x):,}" if pd.notnull(x) else ""
+    display_df[num_cols] = display_df[num_cols].apply(
+        lambda col: col.map(lambda x: f"{int(x):,}" if pd.notnull(x) else "")
     )
 
     left, center, right = st.columns([1, 3, 1])
