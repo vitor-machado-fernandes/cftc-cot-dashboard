@@ -214,6 +214,7 @@ def render_on_call():
 
     detail_df = df[~df["is_total"]].copy() if "is_total" in df.columns else df.copy()
     latest_report_date = detail_df["report_date"].max() if "report_date" in detail_df.columns else pd.NaT
+    latest_release_date = detail_df["release_date"].max() if "release_date" in detail_df.columns else pd.NaT
 
     st.write(
         """
@@ -223,11 +224,21 @@ def render_on_call():
         """
     )
 
-    metric_1, _ = st.columns([1, 4])
+    metric_1, metric_2, _ = st.columns([1, 1, 3])
     metric_1.metric(
-        "Latest Report",
+        "Latest As Of",
         latest_report_date.strftime("%Y-%m-%d") if pd.notna(latest_report_date) else "N/A",
     )
+    metric_2.metric(
+        "Released",
+        latest_release_date.strftime("%Y-%m-%d") if pd.notna(latest_release_date) else "N/A",
+    )
+
+    if pd.notna(latest_release_date) and pd.notna(latest_report_date):
+        st.caption(
+            "CFTC publishes this report on Thursdays, but the positions are reported as of the prior Friday. "
+            f"The current dataset was released on {latest_release_date:%Y-%m-%d} and is as of {latest_report_date:%Y-%m-%d}."
+        )
 
     sales_df = _prepare_unfixed_call_sales_df(df)
     purchases_df = _prepare_unfixed_call_purchases_df(df)
@@ -294,7 +305,7 @@ def render_on_call():
     if not latest_snapshot_df.empty:
         st.subheader("Latest Contract-Month Snapshot")
         st.caption(
-            f"Latest report as of {latest_snapshot_date:%Y-%m-%d}: unfixed sales and purchases by contract month, plus week-over-week change."
+            f"Latest snapshot as of {latest_snapshot_date:%Y-%m-%d}: unfixed sales and purchases by contract month, plus week-over-week change."
         )
 
         formatted_df = latest_snapshot_df.copy()

@@ -317,6 +317,11 @@ def build_cotton_on_call_parquet(
         "latest_report_date": (
             final_df["report_date"].max().date().isoformat() if not final_df.empty else None
         ),
+        "latest_release_date": (
+            final_df["release_date"].max().date().isoformat()
+            if not final_df.empty and "release_date" in final_df.columns and final_df["release_date"].notna().any()
+            else None
+        ),
         "errors": errors,
     }
 

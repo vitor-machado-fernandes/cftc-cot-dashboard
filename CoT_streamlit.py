@@ -26,11 +26,13 @@ st.title("CFTC Commitment of Traders Dashboard")
 
 
 from CoT_updater import run_update_check
+from usda_crop_progress_condition_updater import refresh_crop_progress_condition_data
 from pages_app.open_interest import render_open_interest
 from pages_app.on_call import render_on_call
 from pages_app.n_traders import render_n_traders
 from pages_app.CoT_position import render_position
 from pages_app.concentration import render_concentration
+from pages_app.crop_progress_condition import render_crop_progress_condition
 
 
 def render_home():
@@ -48,6 +50,7 @@ def render_home():
         **Sections**
 
         - `Concentration`: Shows how concentrated long and short exposure is among the largest traders.
+        - `Crop Progress & Condition`: Tracks USDA weekly planting, development, and crop-condition data.
         - `Number of Traders`: Tracks how many traders are active on the long, short, and spread sides.
         - `On-Call`: Focuses on cotton on-call activity, including unfixed sales and purchases.
         - `Open Interest`: Explores open interest trends and seasonal patterns.
@@ -112,8 +115,11 @@ if "on_call_update_ran" not in st.session_state:
                     )
 
                 if on_call_result.get("did_update"):
+                    latest_release = on_call_result.get("latest_release_date")
+                    latest_as_of = on_call_result.get("latest_report_date")
                     st.success(
-                        f"Cotton on-call parquet updated through {on_call_result['latest_report_date']}."
+                        "Cotton on-call parquet updated "
+                        f"(released {latest_release or 'N/A'}, as of {latest_as_of or 'N/A'})."
                     )
                     if on_call_result["errors"]:
                         st.warning(
@@ -124,13 +130,50 @@ if "on_call_update_ran" not in st.session_state:
         except Exception as e:
             st.warning(f"Cotton on-call update check failed: {e}")
 
+# ------------------------------------------------
+# Run USDA crop progress / condition updater once per session
+# ------------------------------------------------
+if "usda_crop_progress_update_ran" not in st.session_state:
+    st.session_state["usda_crop_progress_update_ran"] = True
+
+    with st.spinner("Checking for USDA crop progress and condition updates..."):
+        try:
+            usda_api_key = (
+                st.secrets.get("USDA_QUICKSTATS_API_KEY")
+                if hasattr(st, "secrets")
+                else None
+            ) or os.getenv("USDA_QUICKSTATS_API_KEY") or os.getenv("QUICKSTATS_API_KEY")
+
+            crop_result = refresh_crop_progress_condition_data(
+                data_dir=".",
+                api_key=usda_api_key,
+                force=False,
+            )
+
+            if crop_result.get("skipped") and crop_result.get("reason") == "missing_api_key":
+                st.info(
+                    "USDA crop progress auto-update skipped because `USDA_QUICKSTATS_API_KEY` is not configured."
+                )
+            elif crop_result.get("did_update"):
+                remote_latest = crop_result.get("remote_latest")
+                remote_label = remote_latest.date() if remote_latest is not None else "N/A"
+                st.success(f"USDA crop progress data updated through {remote_label}.")
+                for msg in crop_result["messages"]:
+                    st.caption(msg)
+            else:
+                local_latest = crop_result.get("local_latest")
+                local_label = local_latest.date() if local_latest is not None else "N/A"
+                st.info(f"USDA crop progress data already up to date (latest {local_label}).")
+        except Exception as e:
+            st.warning(f"USDA crop progress update check failed: {e}")
+
 
 # ------------------------------------------------
 # ---- Sidebar navigation ----
 # ------------------------------------------------
 page = st.sidebar.radio(
     "Select section",
-    ["Home", "Concentration", "Number of Traders", "On-Call", "Open Interest", "Position"]
+    ["Home", "Concentration", "Crop Progress & Condition", "Number of Traders", "On-Call", "Open Interest", "Position"]
 )
 
 # ------------------------------------------------
@@ -148,4 +191,6 @@ elif page == "Number of Traders":
     render_n_traders()
 elif page == "Concentration":
     render_concentration()
+elif page == "Crop Progress & Condition":
+    render_crop_progress_condition()
 
