@@ -6,6 +6,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from usda_crop_progress_condition_updater import fetch_crop_progress_condition_history
+
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_PATH = BASE_DIR / "usda_crop_progress_condition.parquet"
@@ -33,6 +35,59 @@ PROGRESS_COLORS = {
     "DROPPING LEAVES": "#64748b",
     "HARVESTED": "#6f79c8",
 }
+STATE_OPTIONS = [
+    "National",
+    "Alabama",
+    "Alaska",
+    "Arizona",
+    "Arkansas",
+    "California",
+    "Colorado",
+    "Connecticut",
+    "Delaware",
+    "Florida",
+    "Georgia",
+    "Hawaii",
+    "Idaho",
+    "Illinois",
+    "Indiana",
+    "Iowa",
+    "Kansas",
+    "Kentucky",
+    "Louisiana",
+    "Maine",
+    "Massachusetts",
+    "Maryland",
+    "Michigan",
+    "Minnesota",
+    "Mississippi",
+    "Missouri",
+    "Montana",
+    "Nebraska",
+    "Nevada",
+    "New Hampshire",
+    "New Jersey",
+    "New Mexico",
+    "New York",
+    "North Carolina",
+    "North Dakota",
+    "Ohio",
+    "Oklahoma",
+    "Oregon",
+    "Pennsylvania",
+    "Rhode Island",
+    "South Carolina",
+    "South Dakota",
+    "Tennessee",
+    "Texas",
+    "Utah",
+    "Vermont",
+    "Virginia",
+    "Washington",
+    "West Virginia",
+    "Wisconsin",
+    "Wyoming",
+]
 
 
 @st.cache_data
@@ -42,6 +97,34 @@ def load_crop_progress_condition_data(path_str: str, mtime_ns: int | None) -> pd
         return pd.DataFrame()
 
     df = pd.read_parquet(path)
+    if df.empty:
+        return df
+
+    df["report_date"] = pd.to_datetime(df["report_date"], errors="coerce")
+    df["week_of_year"] = pd.to_numeric(df["week_of_year"], errors="coerce")
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+    df["value"] = pd.to_numeric(df["value"], errors="coerce")
+    if "agg_level_desc" not in df.columns:
+        df["agg_level_desc"] = "NATIONAL"
+    if "state_name" not in df.columns:
+        df["state_name"] = ""
+    if "location_label" not in df.columns:
+        df["location_label"] = "National"
+    return df.dropna(subset=["report_date"]).copy()
+
+
+@st.cache_data(show_spinner=False)
+def load_state_crop_progress_condition_data(crop: str, state_name: str, api_key: str | None) -> pd.DataFrame:
+    if not api_key:
+        return pd.DataFrame()
+
+    df = fetch_crop_progress_condition_history(
+        api_key=api_key,
+        crop=crop,
+        agg_level_desc="STATE",
+        state_name=state_name,
+        start_year=2010,
+    )
     if df.empty:
         return df
 
@@ -153,7 +236,9 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
     hist_df = df[df["year"] < current_year].dropna(subset=["value", "week_of_year"]).copy()
 
     fig = go.Figure()
-    stages = sorted(plot_df["stage"].dropna().unique())
+    current_stages = set(plot_df["stage"].dropna().unique().tolist())
+    hist_stages = set(hist_df["stage"].dropna().unique().tolist())
+    stages = sorted(current_stages | hist_stages)
     for stage in stages:
         stage_color = PROGRESS_COLORS.get(stage, "#4b5563")
         hist_stage = hist_df[hist_df["stage"] == stage]
@@ -209,21 +294,27 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
     return fig
 
 
-def build_planting_progress_chart(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
-    planting_df = df[df["stage"].str.contains("PLANTED", case=False, na=False)].copy()
-    planting_df = planting_df.dropna(subset=["value", "week_of_year", "year"])
-    if planting_df.empty:
+def build_stage_vs_other_years_chart(
+    df: pd.DataFrame,
+    selected_date: pd.Timestamp,
+    stage_name: str,
+    title: str,
+    y_title: str,
+) -> go.Figure:
+    stage_df = df[df["stage"].str.upper() == stage_name.upper()].copy()
+    stage_df = stage_df.dropna(subset=["value", "week_of_year", "year"])
+    if stage_df.empty:
         return go.Figure()
 
     selected_year = int(selected_date.year)
-    all_years = sorted(int(y) for y in planting_df["year"].dropna().unique())
+    all_years = sorted(int(y) for y in stage_df["year"].dropna().unique())
     prior_years = [y for y in all_years if y < selected_year]
     chosen_years = (prior_years[-5:] + [selected_year]) if selected_year in all_years else prior_years[-6:]
     color_map = get_year_color_map(chosen_years)
 
     fig = go.Figure()
     for year in chosen_years:
-        year_df = planting_df[planting_df["year"] == year].sort_values("report_date")
+        year_df = stage_df[stage_df["year"] == year].sort_values("report_date")
         if year == selected_year:
             year_df = year_df[year_df["report_date"] <= selected_date]
 
@@ -243,8 +334,8 @@ def build_planting_progress_chart(df: pd.DataFrame, selected_date: pd.Timestamp)
         )
 
     fig.add_vline(x=int(selected_date.isocalendar().week), line_dash="dash", line_color="black")
-    fig.update_layout(title="Planting Progress vs Other Years")
-    apply_report_layout(fig, height=320, y_title="% Planted", y_range=[0, 100])
+    fig.update_layout(title=title)
+    apply_report_layout(fig, height=320, y_title=y_title, y_range=[0, 100])
     return fig
 
 
@@ -364,16 +455,48 @@ def render_crop_progress_condition():
         existing_crop = st.session_state["crop_progress_condition_crop"]
         if existing_crop in available_crops:
             crop_index = available_crops.index(existing_crop)
+    state_index = 0
+    if "crop_progress_condition_state" in st.session_state:
+        existing_state = st.session_state["crop_progress_condition_state"]
+        if existing_state in STATE_OPTIONS:
+            state_index = STATE_OPTIONS.index(existing_state)
 
-    controls = st.columns(3)
+    controls = st.columns(4)
     with controls[0]:
         crop = st.selectbox("Crop", available_crops, index=crop_index, key="crop_progress_condition_crop")
+    with controls[1]:
+        state_name = st.selectbox("Location", STATE_OPTIONS, index=state_index, key="crop_progress_condition_state")
 
-    progress_df = progress_subset(df, crop)
-    condition_df = condition_subset(df, crop)
+    if state_name == "National":
+        active_df = df[df["location_label"] == "National"].copy()
+    else:
+        usda_api_key = (
+            st.secrets.get("USDA_QUICKSTATS_API_KEY")
+            if hasattr(st, "secrets")
+            else None
+        )
+        if not usda_api_key:
+            usda_api_key = st.secrets.get("QUICKSTATS_API_KEY") if hasattr(st, "secrets") else None
+        if not usda_api_key:
+            usda_api_key = st.secrets.get("NASS_API_KEY") if hasattr(st, "secrets") else None
+        if not usda_api_key:
+            usda_api_key = None
+
+        with st.spinner(f"Loading USDA {state_name} crop progress data..."):
+            active_df = load_state_crop_progress_condition_data(crop, state_name, usda_api_key)
+
+        if active_df.empty:
+            st.warning(
+                f"No USDA crop progress/condition data was returned for {crop} in {state_name}. "
+                "This can happen when the crop is not reported at that state level."
+            )
+            return
+
+    progress_df = progress_subset(active_df, crop)
+    condition_df = condition_subset(active_df, crop)
     progress_year, progress_dates = latest_year_dates(progress_df)
     condition_year, condition_dates = latest_year_dates(condition_df)
-    with controls[1]:
+    with controls[2]:
         progress_date = None
         if progress_dates:
             progress_date = st.selectbox(
@@ -383,7 +506,7 @@ def render_crop_progress_condition():
                 format_func=lambda d: pd.Timestamp(d).strftime("%Y-%m-%d"),
                 key="crop_progress_report_date",
             )
-    with controls[2]:
+    with controls[3]:
         condition_date = None
         if condition_dates:
             condition_date = st.selectbox(
@@ -407,8 +530,18 @@ def render_crop_progress_condition():
     st.plotly_chart(build_good_excellent_chart(condition_df, condition_date), use_container_width=True)
     st.plotly_chart(build_condition_stacked_bar(condition_df, condition_date), use_container_width=True)
     st.plotly_chart(build_progress_lines(progress_df, progress_date), use_container_width=True)
-    st.plotly_chart(build_planting_progress_chart(progress_df, progress_date), use_container_width=True)
+    harvest_fig = build_stage_vs_other_years_chart(
+        progress_df,
+        progress_date,
+        stage_name="HARVESTED",
+        title="Harvest Progress vs Other Years",
+        y_title="% Harvested",
+    )
+    if len(harvest_fig.data) == 0:
+        st.info("No harvested progress series is available for the selected crop/location.")
+    else:
+        st.plotly_chart(harvest_fig, use_container_width=True)
     st.caption(
-        f"Using {progress_year} progress data through {progress_date.date()} and "
-        f"{condition_year} condition data through {condition_date.date()}."
+        f"Using {state_name} {crop} progress data through {progress_date.date()} and "
+        f"condition data through {condition_date.date()}."
     )

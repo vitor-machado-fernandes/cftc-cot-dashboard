@@ -88,17 +88,38 @@ def _fetch_latest_remote_date(api_key: str) -> pd.Timestamp | None:
 
 
 def _fetch_commodity_history(api_key: str, crop: str, crop_params: dict, start_year: int = 2010) -> pd.DataFrame:
+    return fetch_crop_progress_condition_history(
+        api_key=api_key,
+        crop=crop,
+        agg_level_desc="NATIONAL",
+        state_name=None,
+        start_year=start_year,
+    )
+
+
+def fetch_crop_progress_condition_history(
+    api_key: str,
+    crop: str,
+    agg_level_desc: str = "NATIONAL",
+    state_name: str | None = None,
+    start_year: int = 2010,
+) -> pd.DataFrame:
+    crop_params = COMMODITIES[crop]
+    params = {
+        "source_desc": "SURVEY",
+        "sector_desc": "CROPS",
+        "group_desc": "FIELD CROPS",
+        "agg_level_desc": agg_level_desc,
+        "freq_desc": "WEEKLY",
+        "year__GE": start_year,
+        **crop_params,
+    }
+    if state_name:
+        params["state_name"] = state_name
+
     df = _fetch_quickstats_rows(
         api_key,
-        {
-            "source_desc": "SURVEY",
-            "sector_desc": "CROPS",
-            "group_desc": "FIELD CROPS",
-            "agg_level_desc": "NATIONAL",
-            "freq_desc": "WEEKLY",
-            "year__GE": start_year,
-            **crop_params,
-        },
+        params,
     )
 
     if df.empty:
@@ -117,6 +138,9 @@ def _fetch_commodity_history(api_key: str, crop: str, crop_params: dict, start_y
     df["short_desc"] = df["short_desc"].fillna("").str.strip()
     df["unit_desc"] = df["unit_desc"].fillna("").str.strip()
     df["reference_period_desc"] = df["reference_period_desc"].fillna("").str.strip()
+    df["agg_level_desc"] = df["agg_level_desc"].fillna("").str.strip()
+    df["state_name"] = df["state_name"].fillna("").str.strip()
+    df["location_label"] = df["state_name"].where(df["state_name"].ne(""), "National")
 
     keep_cols = [
         "crop",
@@ -126,6 +150,9 @@ def _fetch_commodity_history(api_key: str, crop: str, crop_params: dict, start_y
         "unit_desc",
         "short_desc",
         "reference_period_desc",
+        "agg_level_desc",
+        "state_name",
+        "location_label",
         "report_date",
         "week_of_year",
         "year",
@@ -206,7 +233,7 @@ def refresh_crop_progress_condition_data(
 
     out = pd.concat(frames, ignore_index=True)
     out = out.drop_duplicates(
-        subset=["crop", "statisticcat_desc", "class_desc", "report_date", "short_desc"],
+        subset=["crop", "agg_level_desc", "state_name", "statisticcat_desc", "class_desc", "report_date", "short_desc"],
         keep="last",
     ).sort_values(["crop", "statisticcat_desc", "report_date", "class_desc"])
 
