@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import tomllib
 from pathlib import Path
 
 import pandas as pd
@@ -11,6 +13,7 @@ from usda_crop_progress_condition_updater import fetch_crop_progress_condition_h
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_PATH = BASE_DIR / "usda_crop_progress_condition.parquet"
+SECRETS_PATH = BASE_DIR / ".streamlit" / "secrets.toml"
 CONDITION_ORDER = ["VERY POOR", "POOR", "FAIR", "GOOD", "EXCELLENT"]
 CONDITION_COLORS = {
     "VERY POOR": "#7f1d1d",
@@ -113,18 +116,55 @@ def load_crop_progress_condition_data(path_str: str, mtime_ns: int | None) -> pd
     return df.dropna(subset=["report_date"]).copy()
 
 
+def get_usda_api_key() -> str | None:
+    if hasattr(st, "secrets"):
+        for key_name in ["USDA_QUICKSTATS_API_KEY", "QUICKSTATS_API_KEY", "NASS_API_KEY"]:
+            value = st.secrets.get(key_name)
+            if value:
+                return value
+
+    for key_name in ["USDA_QUICKSTATS_API_KEY", "QUICKSTATS_API_KEY", "NASS_API_KEY"]:
+        value = os.getenv(key_name)
+        if value:
+            return value
+
+    if SECRETS_PATH.exists():
+        with SECRETS_PATH.open("rb") as fh:
+            local_secrets = tomllib.load(fh)
+        for key_name in ["USDA_QUICKSTATS_API_KEY", "QUICKSTATS_API_KEY", "NASS_API_KEY"]:
+            value = local_secrets.get(key_name)
+            if value:
+                return value
+
+    return None
+
+
 @st.cache_data(show_spinner=False)
-def load_state_crop_progress_condition_data(crop: str, state_name: str, api_key: str | None) -> pd.DataFrame:
+def load_state_crop_progress_condition_data(
+    crop: str,
+    state_name: str,
+    api_key: str | None,
+    start_year: int,
+) -> pd.DataFrame:
     if not api_key:
         return pd.DataFrame()
 
-    df = fetch_crop_progress_condition_history(
-        api_key=api_key,
-        crop=crop,
-        agg_level_desc="STATE",
-        state_name=state_name,
-        start_year=2010,
-    )
+    state_candidates = [state_name]
+    if state_name.upper() not in state_candidates:
+        state_candidates.append(state_name.upper())
+
+    df = pd.DataFrame()
+    for state_candidate in state_candidates:
+        df = fetch_crop_progress_condition_history(
+            api_key=api_key,
+            crop=crop,
+            agg_level_desc="STATE",
+            state_name=state_candidate,
+            start_year=start_year,
+        )
+        if not df.empty:
+            break
+
     if df.empty:
         return df
 
@@ -196,6 +236,65 @@ def latest_year_dates(df: pd.DataFrame) -> tuple[int | None, list[pd.Timestamp]]
     return latest_year, [pd.Timestamp(d) for d in dates]
 
 
+def build_broken_line_arrays(
+    series_df: pd.DataFrame,
+    x_col: str = "week_of_year",
+    y_col: str = "value",
+    date_col: str | None = "report_date",
+    gap_days: int = 35,
+    gap_weeks: int = 4,
+) -> tuple[list, list, list]:
+    if series_df.empty:
+        return [], [], []
+
+    sort_cols = [date_col] if date_col else [x_col]
+    ordered = series_df.sort_values(sort_cols).copy()
+    x_vals: list = []
+    y_vals: list = []
+    custom_vals: list = []
+    prev_date = None
+    prev_x = None
+
+    for _, row in ordered.iterrows():
+        current_x = row[x_col]
+        current_date = pd.Timestamp(row[date_col]) if date_col else None
+
+        should_break = False
+        if current_date is not None and prev_date is not None and (current_date - prev_date).days > gap_days:
+            should_break = True
+        if prev_x is not None and pd.notna(current_x) and (current_x - prev_x) > gap_weeks:
+            should_break = True
+
+        if should_break:
+            x_vals.append(None)
+            y_vals.append(None)
+            custom_vals.append(None)
+
+        x_vals.append(current_x)
+        y_vals.append(row[y_col])
+        custom_vals.append(current_date.strftime("%Y-%m-%d") if current_date is not None else None)
+        prev_date = current_date
+        prev_x = current_x
+
+    return x_vals, y_vals, custom_vals
+
+
+def infer_current_season_start(progress_df: pd.DataFrame, selected_date: pd.Timestamp) -> pd.Timestamp | None:
+    selected_year = int(selected_date.year)
+    year_df = progress_df[
+        (progress_df["year"] == selected_year)
+        & (progress_df["report_date"] <= selected_date)
+    ].copy()
+    if year_df.empty:
+        return None
+
+    active_progress = year_df[~year_df["stage"].isin(["HARVESTED"])]
+    if not active_progress.empty:
+        return active_progress["report_date"].min()
+
+    return year_df["report_date"].min()
+
+
 def derive_progress_stage(df: pd.DataFrame) -> pd.Series:
     stage = df["unit_desc"].fillna("").str.upper().str.strip()
     stage = stage.str.replace(r"^PCT\s+", "", regex=True)
@@ -231,7 +330,10 @@ def condition_subset(df: pd.DataFrame, crop: str) -> pd.DataFrame:
 
 def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
     current_year = int(selected_date.year)
+    season_start = infer_current_season_start(df, selected_date)
     plot_df = df[(df["year"] == current_year) & (df["report_date"] <= selected_date)].copy()
+    if season_start is not None:
+        plot_df = plot_df[plot_df["report_date"] >= season_start]
     plot_df = plot_df.dropna(subset=["value", "week_of_year"])
     hist_df = df[df["year"] < current_year].dropna(subset=["value", "week_of_year"]).copy()
 
@@ -248,14 +350,16 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
                 .mean()
                 .sort_values("week_of_year")
             )
+            hist_x, hist_y, _ = build_broken_line_arrays(hist_avg, date_col=None)
             fig.add_trace(
                 go.Scatter(
-                    x=hist_avg["week_of_year"],
-                    y=hist_avg["value"],
+                    x=hist_x,
+                    y=hist_y,
                     mode="lines",
                     name=f"{stage.title()} 5Y Avg",
                     line=dict(width=1.5, dash="dot", color=stage_color),
                     opacity=0.55,
+                    connectgaps=False,
                     hovertemplate=f"{stage.title()} 5Y avg<br>Week %{{x}}<br>%{{y:.0f}}%<extra></extra>",
                     showlegend=False,
                 )
@@ -264,14 +368,16 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
         stage_df = plot_df[plot_df["stage"] == stage].sort_values("report_date")
         if stage_df.empty:
             continue
+        x_vals, y_vals, custom_vals = build_broken_line_arrays(stage_df)
         fig.add_trace(
             go.Scatter(
-                x=stage_df["week_of_year"],
-                y=stage_df["value"],
+                x=x_vals,
+                y=y_vals,
                 mode="lines",
                 name=stage.title(),
                 line=dict(width=3, color=stage_color),
-                customdata=stage_df["report_date"].dt.strftime("%Y-%m-%d"),
+                customdata=custom_vals,
+                connectgaps=False,
                 hovertemplate="%{fullData.name}<br>Week %{x}<br>%{y:.0f}%<br>%{customdata}<extra></extra>",
             )
         )
@@ -320,11 +426,12 @@ def build_planting_and_harvest_chart(df: pd.DataFrame, selected_date: pd.Timesta
             stage_year_df = year_df[year_df["stage"].str.upper() == stage_name].sort_values("report_date")
             if stage_year_df.empty:
                 continue
+            x_vals, y_vals, custom_vals = build_broken_line_arrays(stage_year_df)
 
             fig.add_trace(
                 go.Scatter(
-                    x=stage_year_df["week_of_year"],
-                    y=stage_year_df["value"],
+                    x=x_vals,
+                    y=y_vals,
                     mode="lines",
                     name=f"{year} {stage_name.title()}",
                     line=dict(
@@ -332,7 +439,8 @@ def build_planting_and_harvest_chart(df: pd.DataFrame, selected_date: pd.Timesta
                         color=color_map[year],
                         dash=dash_map[stage_name],
                     ),
-                    customdata=stage_year_df["report_date"].dt.strftime("%Y-%m-%d"),
+                    customdata=custom_vals,
+                    connectgaps=False,
                     hovertemplate="%{fullData.name}<br>Week %{x}<br>%{y:.0f}%<br>%{customdata}<extra></extra>",
                 )
             )
@@ -343,9 +451,15 @@ def build_planting_and_harvest_chart(df: pd.DataFrame, selected_date: pd.Timesta
     return fig
 
 
-def build_condition_stacked_bar(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
+def build_condition_stacked_bar(
+    df: pd.DataFrame,
+    selected_date: pd.Timestamp,
+    season_start: pd.Timestamp | None = None,
+) -> go.Figure:
     current_year = int(selected_date.year)
     plot_df = df[(df["year"] == current_year) & (df["report_date"] <= selected_date)].copy()
+    if season_start is not None:
+        plot_df = plot_df[plot_df["report_date"] >= season_start]
     plot_df = plot_df.dropna(subset=["value", "week_of_year"])
 
     weekly = (
@@ -405,14 +519,17 @@ def build_good_excellent_chart(df: pd.DataFrame, selected_date: pd.Timestamp) ->
         if year_df.empty:
             continue
 
+        x_vals, y_vals, custom_vals = build_broken_line_arrays(year_df)
+
         fig.add_trace(
             go.Scatter(
-                x=year_df["week_of_year"],
-                y=year_df["value"],
+                x=x_vals,
+                y=y_vals,
                 mode="lines",
                 name=str(year),
                 line=dict(width=3 if year == selected_year else 2, color=color_map[year]),
-                customdata=year_df["report_date"].dt.strftime("%Y-%m-%d"),
+                customdata=custom_vals,
+                connectgaps=False,
                 hovertemplate="%{fullData.name}<br>Week %{x}<br>%{y:.0f}%<br>%{customdata}<extra></extra>",
             )
         )
@@ -474,25 +591,22 @@ def render_crop_progress_condition():
     if state_name == "National":
         active_df = df[df["location_label"] == "National"].copy()
     else:
-        usda_api_key = (
-            st.secrets.get("USDA_QUICKSTATS_API_KEY")
-            if hasattr(st, "secrets")
-            else None
-        )
-        if not usda_api_key:
-            usda_api_key = st.secrets.get("QUICKSTATS_API_KEY") if hasattr(st, "secrets") else None
-        if not usda_api_key:
-            usda_api_key = st.secrets.get("NASS_API_KEY") if hasattr(st, "secrets") else None
-        if not usda_api_key:
-            usda_api_key = None
+        usda_api_key = get_usda_api_key()
+        state_start_year = max(pd.Timestamp.today().year - 7, 2018)
 
         with st.spinner(f"Loading USDA {state_name} crop progress data..."):
-            active_df = load_state_crop_progress_condition_data(crop, state_name, usda_api_key)
+            active_df = load_state_crop_progress_condition_data(
+                crop,
+                state_name,
+                usda_api_key,
+                state_start_year,
+            )
 
         if active_df.empty:
             st.warning(
                 f"No USDA crop progress/condition data was returned for {crop} in {state_name}. "
-                "This can happen when the crop is not reported at that state level."
+                "This can happen when the crop is not reported at that state level, the API key is unavailable to this Streamlit session, "
+                "or USDA does not return the request cleanly on the first try."
             )
             return
 
@@ -530,9 +644,13 @@ def render_crop_progress_condition():
 
     progress_date = pd.Timestamp(progress_date)
     condition_date = pd.Timestamp(condition_date)
+    condition_season_start = infer_current_season_start(progress_df, condition_date)
 
     st.plotly_chart(build_good_excellent_chart(condition_df, condition_date), use_container_width=True)
-    st.plotly_chart(build_condition_stacked_bar(condition_df, condition_date), use_container_width=True)
+    st.plotly_chart(
+        build_condition_stacked_bar(condition_df, condition_date, season_start=condition_season_start),
+        use_container_width=True,
+    )
     st.plotly_chart(build_progress_lines(progress_df, progress_date), use_container_width=True)
     planting_harvest_fig = build_planting_and_harvest_chart(progress_df, progress_date)
     if len(planting_harvest_fig.data) == 0:
