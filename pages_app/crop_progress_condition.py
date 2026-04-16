@@ -294,14 +294,8 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
     return fig
 
 
-def build_stage_vs_other_years_chart(
-    df: pd.DataFrame,
-    selected_date: pd.Timestamp,
-    stage_name: str,
-    title: str,
-    y_title: str,
-) -> go.Figure:
-    stage_df = df[df["stage"].str.upper() == stage_name.upper()].copy()
+def build_planting_and_harvest_chart(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
+    stage_df = df[df["stage"].str.upper().isin(["PLANTED", "HARVESTED"])].copy()
     stage_df = stage_df.dropna(subset=["value", "week_of_year", "year"])
     if stage_df.empty:
         return go.Figure()
@@ -311,31 +305,41 @@ def build_stage_vs_other_years_chart(
     prior_years = [y for y in all_years if y < selected_year]
     chosen_years = (prior_years[-5:] + [selected_year]) if selected_year in all_years else prior_years[-6:]
     color_map = get_year_color_map(chosen_years)
+    dash_map = {"PLANTED": "solid", "HARVESTED": "dash"}
 
     fig = go.Figure()
     for year in chosen_years:
-        year_df = stage_df[stage_df["year"] == year].sort_values("report_date")
+        year_df = stage_df[stage_df["year"] == year].copy()
         if year == selected_year:
             year_df = year_df[year_df["report_date"] <= selected_date]
 
         if year_df.empty:
             continue
 
-        fig.add_trace(
-            go.Scatter(
-                x=year_df["week_of_year"],
-                y=year_df["value"],
-                mode="lines",
-                name=str(year),
-                line=dict(width=3 if year == selected_year else 2, color=color_map[year]),
-                customdata=year_df["report_date"].dt.strftime("%Y-%m-%d"),
-                hovertemplate="%{fullData.name}<br>Week %{x}<br>%{y:.0f}%<br>%{customdata}<extra></extra>",
+        for stage_name in ["PLANTED", "HARVESTED"]:
+            stage_year_df = year_df[year_df["stage"].str.upper() == stage_name].sort_values("report_date")
+            if stage_year_df.empty:
+                continue
+
+            fig.add_trace(
+                go.Scatter(
+                    x=stage_year_df["week_of_year"],
+                    y=stage_year_df["value"],
+                    mode="lines",
+                    name=f"{year} {stage_name.title()}",
+                    line=dict(
+                        width=3 if year == selected_year else 2,
+                        color=color_map[year],
+                        dash=dash_map[stage_name],
+                    ),
+                    customdata=stage_year_df["report_date"].dt.strftime("%Y-%m-%d"),
+                    hovertemplate="%{fullData.name}<br>Week %{x}<br>%{y:.0f}%<br>%{customdata}<extra></extra>",
+                )
             )
-        )
 
     fig.add_vline(x=int(selected_date.isocalendar().week), line_dash="dash", line_color="black")
-    fig.update_layout(title=title)
-    apply_report_layout(fig, height=320, y_title=y_title, y_range=[0, 100])
+    fig.update_layout(title="Planting and Harvest Progress vs Other Years")
+    apply_report_layout(fig, height=340, y_title="% of Crop", y_range=[0, 100])
     return fig
 
 
@@ -530,17 +534,11 @@ def render_crop_progress_condition():
     st.plotly_chart(build_good_excellent_chart(condition_df, condition_date), use_container_width=True)
     st.plotly_chart(build_condition_stacked_bar(condition_df, condition_date), use_container_width=True)
     st.plotly_chart(build_progress_lines(progress_df, progress_date), use_container_width=True)
-    harvest_fig = build_stage_vs_other_years_chart(
-        progress_df,
-        progress_date,
-        stage_name="HARVESTED",
-        title="Harvest Progress vs Other Years",
-        y_title="% Harvested",
-    )
-    if len(harvest_fig.data) == 0:
-        st.info("No harvested progress series is available for the selected crop/location.")
+    planting_harvest_fig = build_planting_and_harvest_chart(progress_df, progress_date)
+    if len(planting_harvest_fig.data) == 0:
+        st.info("No planted or harvested progress series is available for the selected crop/location.")
     else:
-        st.plotly_chart(harvest_fig, use_container_width=True)
+        st.plotly_chart(planting_harvest_fig, use_container_width=True)
     st.caption(
         f"Using {state_name} {crop} progress data through {progress_date.date()} and "
         f"condition data through {condition_date.date()}."
