@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tomllib
 from pathlib import Path
 
 import pandas as pd
@@ -18,6 +19,7 @@ COMMODITIES = {
 }
 
 SENTINEL_COMMODITY = "CORN"
+SECRETS_PATH = Path(__file__).resolve().parent / ".streamlit" / "secrets.toml"
 
 
 def _get_api_key(api_key: str | None = None) -> str | None:
@@ -31,6 +33,14 @@ def _get_api_key(api_key: str | None = None) -> str | None:
     )
     if env_key:
         return env_key
+
+    if SECRETS_PATH.exists():
+        with SECRETS_PATH.open("rb") as fh:
+            secrets = tomllib.load(fh)
+        for key_name in ["USDA_QUICKSTATS_API_KEY", "QUICKSTATS_API_KEY", "NASS_API_KEY"]:
+            value = secrets.get(key_name)
+            if value:
+                return value
 
     return None
 
@@ -141,6 +151,8 @@ def fetch_crop_progress_condition_history(
     df["agg_level_desc"] = df["agg_level_desc"].fillna("").str.strip()
     df["state_name"] = df["state_name"].fillna("").str.strip()
     df["location_label"] = df["state_name"].where(df["state_name"].ne(""), "National")
+    df.loc[df["agg_level_desc"].str.upper() == "NATIONAL", "state_name"] = ""
+    df.loc[df["agg_level_desc"].str.upper() == "NATIONAL", "location_label"] = "National"
 
     keep_cols = [
         "crop",

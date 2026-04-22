@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import plotly.express as px
 
 st.markdown(
@@ -133,8 +133,15 @@ if "on_call_update_ran" not in st.session_state:
 # ------------------------------------------------
 # Run USDA crop progress / condition updater once per session
 # ------------------------------------------------
-if "usda_crop_progress_update_ran" not in st.session_state:
-    st.session_state["usda_crop_progress_update_ran"] = True
+USDA_UPDATE_CHECK_INTERVAL = timedelta(hours=6)
+last_usda_check = st.session_state.get("usda_crop_progress_last_checked_at")
+should_run_usda_update = (
+    last_usda_check is None
+    or datetime.utcnow() - last_usda_check >= USDA_UPDATE_CHECK_INTERVAL
+)
+
+if should_run_usda_update:
+    st.session_state["usda_crop_progress_last_checked_at"] = datetime.utcnow()
 
     with st.spinner("Checking for USDA crop progress and condition updates..."):
         try:

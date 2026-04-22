@@ -38,59 +38,58 @@ PROGRESS_COLORS = {
     "DROPPING LEAVES": "#64748b",
     "HARVESTED": "#6f79c8",
 }
-STATE_OPTIONS = [
-    "National",
-    "Alabama",
-    "Alaska",
-    "Arizona",
-    "Arkansas",
-    "California",
-    "Colorado",
-    "Connecticut",
-    "Delaware",
-    "Florida",
-    "Georgia",
-    "Hawaii",
-    "Idaho",
-    "Illinois",
-    "Indiana",
-    "Iowa",
-    "Kansas",
-    "Kentucky",
-    "Louisiana",
-    "Maine",
-    "Massachusetts",
-    "Maryland",
-    "Michigan",
-    "Minnesota",
-    "Mississippi",
-    "Missouri",
-    "Montana",
-    "Nebraska",
-    "Nevada",
-    "New Hampshire",
-    "New Jersey",
-    "New Mexico",
-    "New York",
-    "North Carolina",
-    "North Dakota",
-    "Ohio",
-    "Oklahoma",
-    "Oregon",
-    "Pennsylvania",
-    "Rhode Island",
-    "South Carolina",
-    "South Dakota",
-    "Tennessee",
-    "Texas",
-    "Utah",
-    "Vermont",
-    "Virginia",
-    "Washington",
-    "West Virginia",
-    "Wisconsin",
-    "Wyoming",
-]
+STATE_ABBREVIATIONS = {
+    "Alabama": "AL",
+    "Alaska": "AK",
+    "Arizona": "AZ",
+    "Arkansas": "AR",
+    "California": "CA",
+    "Colorado": "CO",
+    "Connecticut": "CT",
+    "Delaware": "DE",
+    "Florida": "FL",
+    "Georgia": "GA",
+    "Hawaii": "HI",
+    "Idaho": "ID",
+    "Illinois": "IL",
+    "Indiana": "IN",
+    "Iowa": "IA",
+    "Kansas": "KS",
+    "Kentucky": "KY",
+    "Louisiana": "LA",
+    "Maine": "ME",
+    "Maryland": "MD",
+    "Massachusetts": "MA",
+    "Michigan": "MI",
+    "Minnesota": "MN",
+    "Mississippi": "MS",
+    "Missouri": "MO",
+    "Montana": "MT",
+    "Nebraska": "NE",
+    "Nevada": "NV",
+    "New Hampshire": "NH",
+    "New Jersey": "NJ",
+    "New Mexico": "NM",
+    "New York": "NY",
+    "North Carolina": "NC",
+    "North Dakota": "ND",
+    "Ohio": "OH",
+    "Oklahoma": "OK",
+    "Oregon": "OR",
+    "Pennsylvania": "PA",
+    "Rhode Island": "RI",
+    "South Carolina": "SC",
+    "South Dakota": "SD",
+    "Tennessee": "TN",
+    "Texas": "TX",
+    "Utah": "UT",
+    "Vermont": "VT",
+    "Virginia": "VA",
+    "Washington": "WA",
+    "West Virginia": "WV",
+    "Wisconsin": "WI",
+    "Wyoming": "WY",
+}
 
 
 @st.cache_data
@@ -113,6 +112,9 @@ def load_crop_progress_condition_data(path_str: str, mtime_ns: int | None) -> pd
         df["state_name"] = ""
     if "location_label" not in df.columns:
         df["location_label"] = "National"
+    df["agg_level_desc"] = df["agg_level_desc"].fillna("").astype(str).str.upper().str.strip()
+    df.loc[df["agg_level_desc"] == "NATIONAL", "location_label"] = "National"
+    df.loc[df["agg_level_desc"] == "NATIONAL", "state_name"] = ""
     return df.dropna(subset=["report_date"]).copy()
 
 
@@ -139,32 +141,22 @@ def get_usda_api_key() -> str | None:
     return None
 
 
-@st.cache_data(show_spinner=False)
-def load_state_crop_progress_condition_data(
+@st.cache_data(show_spinner=False, ttl=21600)
+def load_all_states_crop_progress_data(
     crop: str,
-    state_name: str,
     api_key: str | None,
-    start_year: int,
+    year: int,
 ) -> pd.DataFrame:
     if not api_key:
         return pd.DataFrame()
 
-    state_candidates = [state_name]
-    if state_name.upper() not in state_candidates:
-        state_candidates.append(state_name.upper())
-
-    df = pd.DataFrame()
-    for state_candidate in state_candidates:
-        df = fetch_crop_progress_condition_history(
-            api_key=api_key,
-            crop=crop,
-            agg_level_desc="STATE",
-            state_name=state_candidate,
-            start_year=start_year,
-        )
-        if not df.empty:
-            break
-
+    df = fetch_crop_progress_condition_history(
+        api_key=api_key,
+        crop=crop,
+        agg_level_desc="STATE",
+        state_name=None,
+        start_year=year,
+    )
     if df.empty:
         return df
 
@@ -172,7 +164,7 @@ def load_state_crop_progress_condition_data(
     df["week_of_year"] = pd.to_numeric(df["week_of_year"], errors="coerce")
     df["year"] = pd.to_numeric(df["year"], errors="coerce")
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
-    return df.dropna(subset=["report_date"]).copy()
+    return df[df["year"] == year].dropna(subset=["report_date"]).copy()
 
 
 def get_year_color_map(years: list[int]) -> dict[int, str]:
@@ -312,6 +304,67 @@ def progress_subset(df: pd.DataFrame, crop: str) -> pd.DataFrame:
     return out
 
 
+def build_state_planting_table(df: pd.DataFrame, selected_date: pd.Timestamp) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame()
+
+    progress_df = progress_subset(df, crop=df["crop"].iloc[0])
+    planted_df = progress_df[
+        (progress_df["stage"] == "PLANTED")
+        & (progress_df["report_date"] == selected_date)
+    ].copy()
+    if planted_df.empty:
+        return pd.DataFrame()
+
+    planted_df["state_display"] = planted_df["state_name"].fillna("").str.title()
+    planted_df = planted_df[planted_df["state_display"].ne("")]
+    planted_df["state_code"] = planted_df["state_display"].map(STATE_ABBREVIATIONS).fillna(planted_df["state_display"])
+    table_df = (
+        planted_df[["state_display", "state_code", "value"]]
+        .rename(columns={"state_display": "State", "state_code": "State Code", "value": "Planted (%)"})
+        .sort_values(["Planted (%)", "State"], ascending=[False, True])
+        .reset_index(drop=True)
+    )
+    return table_df
+
+
+def build_state_planting_bar_chart(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
+    table_df = build_state_planting_table(df, selected_date)
+    if table_df.empty:
+        return go.Figure()
+
+    fig = go.Figure(
+        go.Bar(
+            x=table_df["State Code"],
+            y=table_df["Planted (%)"],
+            marker_color="#b5655a",
+            customdata=table_df["State"],
+            hovertemplate="%{customdata} (%{x})<br>%{y:.0f}% planted<extra></extra>",
+        )
+    )
+    fig.update_layout(title=f"Planting Progress by State ({selected_date.date()})")
+    apply_report_layout(fig, height=420, y_title="% Planted", y_range=[0, 100])
+    fig.update_layout(
+        xaxis=dict(
+            type="category",
+            title="",
+            tickmode="array",
+            tickvals=table_df["State Code"].tolist(),
+            ticktext=table_df["State Code"].tolist(),
+            tickangle=-45,
+            showgrid=False,
+            range=None,
+            autorange=True,
+            categoryorder="array",
+            categoryarray=table_df["State Code"].tolist(),
+        ),
+        margin=dict(l=8, r=8, t=52, b=80),
+        bargap=0.15,
+        showlegend=False,
+    )
+    return fig
+
+
 def condition_subset(df: pd.DataFrame, crop: str) -> pd.DataFrame:
     out = df[
         (df["crop"] == crop)
@@ -448,6 +501,16 @@ def build_planting_and_harvest_chart(df: pd.DataFrame, selected_date: pd.Timesta
     fig.add_vline(x=int(selected_date.isocalendar().week), line_dash="dash", line_color="black")
     fig.update_layout(title="Planting and Harvest Progress vs Other Years")
     apply_report_layout(fig, height=340, y_title="% of Crop", y_range=[0, 100])
+    fig.update_layout(
+        margin=dict(l=8, r=8, t=72, b=8),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.0,
+            xanchor="left",
+            x=0,
+        ),
+    )
     return fig
 
 
@@ -489,6 +552,16 @@ def build_condition_stacked_bar(
         bargap=0.12,
     )
     apply_report_layout(fig, height=300, y_title="% Condition", y_range=[0, 100])
+    fig.update_layout(
+        margin=dict(l=8, r=8, t=56, b=8),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=0.98,
+            xanchor="left",
+            x=0,
+        ),
+    )
     return fig
 
 
@@ -576,45 +649,17 @@ def render_crop_progress_condition():
         existing_crop = st.session_state["crop_progress_condition_crop"]
         if existing_crop in available_crops:
             crop_index = available_crops.index(existing_crop)
-    state_index = 0
-    if "crop_progress_condition_state" in st.session_state:
-        existing_state = st.session_state["crop_progress_condition_state"]
-        if existing_state in STATE_OPTIONS:
-            state_index = STATE_OPTIONS.index(existing_state)
-
-    controls = st.columns(4)
+    controls = st.columns(3)
     with controls[0]:
         crop = st.selectbox("Crop", available_crops, index=crop_index, key="crop_progress_condition_crop")
-    with controls[1]:
-        state_name = st.selectbox("Location", STATE_OPTIONS, index=state_index, key="crop_progress_condition_state")
 
-    if state_name == "National":
-        active_df = df[df["location_label"] == "National"].copy()
-    else:
-        usda_api_key = get_usda_api_key()
-        state_start_year = max(pd.Timestamp.today().year - 7, 2018)
-
-        with st.spinner(f"Loading USDA {state_name} crop progress data..."):
-            active_df = load_state_crop_progress_condition_data(
-                crop,
-                state_name,
-                usda_api_key,
-                state_start_year,
-            )
-
-        if active_df.empty:
-            st.warning(
-                f"No USDA crop progress/condition data was returned for {crop} in {state_name}. "
-                "This can happen when the crop is not reported at that state level, the API key is unavailable to this Streamlit session, "
-                "or USDA does not return the request cleanly on the first try."
-            )
-            return
+    active_df = df[df["location_label"] == "National"].copy()
 
     progress_df = progress_subset(active_df, crop)
     condition_df = condition_subset(active_df, crop)
     progress_year, progress_dates = latest_year_dates(progress_df)
     condition_year, condition_dates = latest_year_dates(condition_df)
-    with controls[2]:
+    with controls[1]:
         progress_date = None
         if progress_dates:
             progress_date = st.selectbox(
@@ -624,7 +669,7 @@ def render_crop_progress_condition():
                 format_func=lambda d: pd.Timestamp(d).strftime("%Y-%m-%d"),
                 key="crop_progress_report_date",
             )
-    with controls[3]:
+    with controls[2]:
         condition_date = None
         if condition_dates:
             condition_date = st.selectbox(
@@ -645,6 +690,7 @@ def render_crop_progress_condition():
     progress_date = pd.Timestamp(progress_date)
     condition_date = pd.Timestamp(condition_date)
     condition_season_start = infer_current_season_start(progress_df, condition_date)
+    usda_api_key = get_usda_api_key()
 
     st.plotly_chart(build_good_excellent_chart(condition_df, condition_date), use_container_width=True)
     st.plotly_chart(
@@ -652,12 +698,20 @@ def render_crop_progress_condition():
         use_container_width=True,
     )
     st.plotly_chart(build_progress_lines(progress_df, progress_date), use_container_width=True)
-    planting_harvest_fig = build_planting_and_harvest_chart(progress_df, progress_date)
-    if len(planting_harvest_fig.data) == 0:
-        st.info("No planted or harvested progress series is available for the selected crop/location.")
+
+    with st.spinner("Loading planting progress by state..."):
+        state_bar_source = load_all_states_crop_progress_data(
+            crop=crop,
+            api_key=usda_api_key,
+            year=int(progress_date.year),
+        )
+    state_planting_fig = build_state_planting_bar_chart(state_bar_source, progress_date)
+    if len(state_planting_fig.data) == 0:
+        st.info("No state planting progress bar chart is available for the selected crop and progress report date.")
     else:
-        st.plotly_chart(planting_harvest_fig, use_container_width=True)
+        st.plotly_chart(state_planting_fig, use_container_width=True)
+
     st.caption(
-        f"Using {state_name} {crop} progress data through {progress_date.date()} and "
+        f"Using national {crop} progress data through {progress_date.date()} and "
         f"condition data through {condition_date.date()}."
     )
