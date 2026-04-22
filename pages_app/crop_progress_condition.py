@@ -342,9 +342,12 @@ def build_state_planting_bar_chart(df: pd.DataFrame, selected_date: pd.Timestamp
             hovertemplate="%{customdata} (%{x})<br>%{y:.0f}% planted<extra></extra>",
         )
     )
-    fig.update_layout(title=f"Planting Progress by State ({selected_date.date()})")
-    apply_report_layout(fig, height=420, y_title="% Planted", y_range=[0, 100])
     fig.update_layout(
+        title=f"Planting Progress by State ({selected_date.date()})",
+        height=420,
+        margin=dict(l=8, r=8, t=52, b=80),
+        paper_bgcolor="#f4f2ed",
+        plot_bgcolor="#f8f7f4",
         xaxis=dict(
             type="category",
             title="",
@@ -353,12 +356,18 @@ def build_state_planting_bar_chart(df: pd.DataFrame, selected_date: pd.Timestamp
             ticktext=table_df["State Code"].tolist(),
             tickangle=-45,
             showgrid=False,
-            range=None,
-            autorange=True,
+            zeroline=False,
             categoryorder="array",
             categoryarray=table_df["State Code"].tolist(),
         ),
-        margin=dict(l=8, r=8, t=52, b=80),
+        yaxis=dict(
+            title="% Planted",
+            range=[0, 100],
+            showgrid=True,
+            gridcolor="#d9d9d9",
+            zeroline=False,
+            tickformat=".0f",
+        ),
         bargap=0.15,
         showlegend=False,
     )
