@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+import re
 import tomllib
 from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
+import requests
 import streamlit as st
 
 from usda_crop_progress_condition_updater import fetch_crop_progress_condition_history
@@ -14,6 +16,7 @@ from usda_crop_progress_condition_updater import fetch_crop_progress_condition_h
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_PATH = BASE_DIR / "usda_crop_progress_condition.parquet"
 SECRETS_PATH = BASE_DIR / ".streamlit" / "secrets.toml"
+CROP_REPORT_TEXT_URL = "https://release.nass.usda.gov/reports/prog{week:02d}{year:02d}.txt"
 CONDITION_ORDER = ["VERY POOR", "POOR", "FAIR", "GOOD", "EXCELLENT"]
 CONDITION_COLORS = {
     "VERY POOR": "#7f1d1d",
@@ -390,6 +393,85 @@ def condition_subset(df: pd.DataFrame, crop: str) -> pd.DataFrame:
     return out
 
 
+@st.cache_data(show_spinner=False, ttl=21600)
+def load_crop_progress_report_text(report_date: str) -> str:
+    date = pd.Timestamp(report_date)
+    url = CROP_REPORT_TEXT_URL.format(week=int(date.isocalendar().week), year=int(date.year) % 100)
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    except requests.RequestException:
+        return ""
+    return response.text
+
+
+def extract_published_five_year_average(report_text: str, crop: str, stage: str) -> float | None:
+    if not report_text:
+        return None
+
+    table_heading = f"{crop} {stage.title()} - Selected States".lower()
+    in_table = False
+    for line in report_text.splitlines():
+        if table_heading in line.lower():
+            in_table = True
+            continue
+        if not in_table:
+            continue
+        if " - Selected States" in line:
+            return None
+        if re.search(r"^\s*\d+\s+States\s+\.+:", line):
+            value_text = line.rsplit(":", maxsplit=1)[-1]
+            values = re.findall(r"\d+|\(NA\)|-", value_text)
+            if values and values[-1].isdigit():
+                return float(values[-1])
+            return None
+    return None
+
+
+def load_published_five_year_average(
+    selected_date: pd.Timestamp,
+    crop: str,
+    stage: str,
+) -> pd.DataFrame:
+    text = load_crop_progress_report_text(selected_date.strftime("%Y-%m-%d"))
+    value = extract_published_five_year_average(text, crop, stage)
+    if value is None:
+        return pd.DataFrame(columns=["week_of_year", "value"])
+    return pd.DataFrame([{"week_of_year": int(selected_date.isocalendar().week), "value": value}])
+
+
+def build_aligned_five_year_average(
+    stage_df: pd.DataFrame,
+    selected_date: pd.Timestamp,
+    anchor_df: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    current_year = int(selected_date.year)
+    prior_years = set(range(current_year - 5, current_year))
+    historical = stage_df[stage_df["year"].isin(prior_years)].copy()
+    if historical.empty:
+        return pd.DataFrame(columns=["week_of_year", "value"])
+
+    anchor_source = historical if anchor_df is None else anchor_df[anchor_df["year"].isin(prior_years)].copy()
+    selected_week = int(selected_date.isocalendar().week)
+    aligned_frames: list[pd.DataFrame] = []
+    for year, year_df in historical.groupby("year"):
+        year_df = year_df.sort_values("report_date").copy()
+        year_anchors = anchor_source[anchor_source["year"] == year]["report_date"].drop_duplicates()
+        comparable_dates = year_anchors + pd.DateOffset(years=current_year - int(year))
+        anchor_index = (comparable_dates - selected_date).abs().idxmin()
+        anchor_date = year_anchors.loc[anchor_index]
+        week_offset = ((year_df["report_date"] - anchor_date).dt.days / 7).round().astype(int)
+        year_df["week_of_year"] = selected_week + week_offset
+        aligned_frames.append(year_df)
+
+    return (
+        pd.concat(aligned_frames, ignore_index=True)
+        .groupby("week_of_year", as_index=False)["value"]
+        .mean()
+        .sort_values("week_of_year")
+    )
+
+
 def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
     current_year = int(selected_date.year)
     season_start = infer_current_season_start(df, selected_date)
@@ -403,15 +485,18 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
     current_stages = set(plot_df["stage"].dropna().unique().tolist())
     hist_stages = set(hist_df["stage"].dropna().unique().tolist())
     stages = sorted(current_stages | hist_stages)
+    crop = str(df["crop"].iloc[0]) if not df.empty else ""
     for stage in stages:
         stage_color = PROGRESS_COLORS.get(stage, "#4b5563")
         hist_stage = hist_df[hist_df["stage"] == stage]
         if not hist_stage.empty:
-            hist_avg = (
-                hist_stage.groupby("week_of_year", as_index=False)["value"]
-                .mean()
-                .sort_values("week_of_year")
-            )
+            hist_avg = build_aligned_five_year_average(hist_stage, selected_date, anchor_df=hist_df)
+            published_avg = load_published_five_year_average(selected_date, crop, stage)
+            if not published_avg.empty:
+                hist_avg = pd.concat(
+                    [hist_avg[~hist_avg["week_of_year"].isin(published_avg["week_of_year"])], published_avg],
+                    ignore_index=True,
+                ).sort_values("week_of_year")
             hist_x, hist_y, _ = build_broken_line_arrays(hist_avg, date_col=None)
             fig.add_trace(
                 go.Scatter(
@@ -639,7 +724,8 @@ def render_crop_progress_condition():
     st.write(
         """
         Weekly crop progress and crop condition data come from USDA NASS Quick Stats and are cached locally.
-        This page focuses on national weekly series for the selected crop.
+        This page focuses on national weekly series for the selected crop. For the selected progress report
+        week, published five-year comparisons are read from the official Crop Progress report when available.
         """
     )
 
