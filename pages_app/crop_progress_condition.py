@@ -398,8 +398,10 @@ def load_crop_progress_report_text(report_date: str) -> str:
     date = pd.Timestamp(report_date)
     url = CROP_REPORT_TEXT_URL.format(week=int(date.isocalendar().week), year=int(date.year) % 100)
     try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
+        with requests.Session() as session:
+            session.trust_env = False
+            response = session.get(url, timeout=30)
+            response.raise_for_status()
     except requests.RequestException:
         return ""
     return response.text
@@ -465,22 +467,6 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
             continue
 
         published_avg = load_published_five_year_averages(stage_df, crop, stage)
-        if not published_avg.empty:
-            hist_x, hist_y, _ = build_broken_line_arrays(published_avg, date_col=None)
-            fig.add_trace(
-                go.Scatter(
-                    x=hist_x,
-                    y=hist_y,
-                    mode="lines",
-                    name=f"{stage.title()} 5Y Avg",
-                    line=dict(width=1.5, dash="dot", color=stage_color),
-                    opacity=0.55,
-                    connectgaps=False,
-                    hovertemplate=f"{stage.title()} 5Y avg<br>Week %{{x}}<br>%{{y:.0f}}%<extra></extra>",
-                    showlegend=False,
-                )
-            )
-
         x_vals, y_vals, custom_vals = build_broken_line_arrays(stage_df)
         fig.add_trace(
             go.Scatter(
@@ -505,6 +491,21 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
             xshift=8,
             font=dict(color=stage_color, size=12),
         )
+        if not published_avg.empty:
+            hist_x, hist_y, _ = build_broken_line_arrays(published_avg, date_col=None)
+            fig.add_trace(
+                go.Scatter(
+                    x=hist_x,
+                    y=hist_y,
+                    mode="lines",
+                    name=f"{stage.title()} 5Y Avg",
+                    line=dict(width=2, dash="dot", color=stage_color),
+                    opacity=0.8,
+                    connectgaps=False,
+                    hovertemplate=f"{stage.title()} 5Y avg<br>Week %{{x}}<br>%{{y:.0f}}%<extra></extra>",
+                    showlegend=False,
+                )
+            )
 
     fig.add_vline(x=int(selected_date.isocalendar().week), line_dash="dash", line_color="black")
     fig.update_layout(title=f"Progress ({current_year})")
