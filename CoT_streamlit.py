@@ -164,6 +164,8 @@ if should_run_usda_update:
             elif crop_result.get("did_update"):
                 remote_latest = crop_result.get("remote_latest")
                 remote_label = remote_latest.date() if remote_latest is not None else "N/A"
+                st.session_state.pop("crop_progress_report_date", None)
+                st.session_state.pop("crop_condition_report_date", None)
                 st.success(f"USDA crop progress data updated through {remote_label}.")
                 for msg in crop_result["messages"]:
                     st.caption(msg)
