@@ -405,14 +405,13 @@ def load_crop_progress_report_text(report_date: str) -> str:
     return response.text
 
 
-def extract_published_five_year_average(report_text: str, crop: str, stage: str) -> float | None:
+def extract_selected_states_row(report_text: str, table_heading: str) -> list[float | None] | None:
     if not report_text:
         return None
 
-    table_heading = f"{crop} {stage.title()} - Selected States".lower()
     in_table = False
     for line in report_text.splitlines():
-        if table_heading in line.lower():
+        if table_heading.lower() in line.lower():
             in_table = True
             continue
         if not in_table:
@@ -422,54 +421,65 @@ def extract_published_five_year_average(report_text: str, crop: str, stage: str)
         if re.search(r"^\s*\d+\s+States\s+\.+:", line):
             value_text = line.rsplit(":", maxsplit=1)[-1]
             values = re.findall(r"\d+|\(NA\)|-", value_text)
-            if values and values[-1].isdigit():
-                return float(values[-1])
-            return None
+            return [float(value) if value.isdigit() else (0.0 if value == "-" else None) for value in values]
     return None
 
 
-def load_published_five_year_average(
-    selected_date: pd.Timestamp,
+def extract_reported_progress_values(report_text: str, crop: str, stage: str) -> tuple[float, float | None] | None:
+    values = extract_selected_states_row(report_text, f"{crop} {stage.title()} - Selected States")
+    if not values or len(values) < 4 or values[-2] is None:
+        return None
+    return values[-2], values[-1]
+
+
+def extract_reported_condition_values(report_text: str, crop: str) -> dict[str, float] | None:
+    values = extract_selected_states_row(report_text, f"{crop} Condition - Selected States")
+    if not values or len(values) < len(CONDITION_ORDER) or any(value is None for value in values[-5:]):
+        return None
+    return dict(zip(CONDITION_ORDER, values[-5:]))
+
+
+def load_reported_progress_series(
+    stage_df: pd.DataFrame,
     crop: str,
     stage: str,
 ) -> pd.DataFrame:
-    text = load_crop_progress_report_text(selected_date.strftime("%Y-%m-%d"))
-    value = extract_published_five_year_average(text, crop, stage)
-    if value is None:
-        return pd.DataFrame(columns=["week_of_year", "value"])
-    return pd.DataFrame([{"week_of_year": int(selected_date.isocalendar().week), "value": value}])
+    rows: list[dict] = []
+    for report_date in sorted(stage_df["report_date"].dropna().unique()):
+        date = pd.Timestamp(report_date)
+        text = load_crop_progress_report_text(date.strftime("%Y-%m-%d"))
+        values = extract_reported_progress_values(text, crop, stage)
+        if values is not None:
+            value, five_year_average = values
+            rows.append(
+                {
+                    "report_date": date,
+                    "week_of_year": int(date.isocalendar().week),
+                    "value": value,
+                    "five_year_average": five_year_average,
+                }
+            )
+    return pd.DataFrame(rows, columns=["report_date", "week_of_year", "value", "five_year_average"])
 
 
-def build_aligned_five_year_average(
-    stage_df: pd.DataFrame,
-    selected_date: pd.Timestamp,
-    anchor_df: pd.DataFrame | None = None,
-) -> pd.DataFrame:
-    current_year = int(selected_date.year)
-    prior_years = set(range(current_year - 5, current_year))
-    historical = stage_df[stage_df["year"].isin(prior_years)].copy()
-    if historical.empty:
-        return pd.DataFrame(columns=["week_of_year", "value"])
-
-    anchor_source = historical if anchor_df is None else anchor_df[anchor_df["year"].isin(prior_years)].copy()
-    selected_week = int(selected_date.isocalendar().week)
-    aligned_frames: list[pd.DataFrame] = []
-    for year, year_df in historical.groupby("year"):
-        year_df = year_df.sort_values("report_date").copy()
-        year_anchors = anchor_source[anchor_source["year"] == year]["report_date"].drop_duplicates()
-        comparable_dates = year_anchors + pd.DateOffset(years=current_year - int(year))
-        anchor_index = (comparable_dates - selected_date).abs().idxmin()
-        anchor_date = year_anchors.loc[anchor_index]
-        week_offset = ((year_df["report_date"] - anchor_date).dt.days / 7).round().astype(int)
-        year_df["week_of_year"] = selected_week + week_offset
-        aligned_frames.append(year_df)
-
-    return (
-        pd.concat(aligned_frames, ignore_index=True)
-        .groupby("week_of_year", as_index=False)["value"]
-        .mean()
-        .sort_values("week_of_year")
-    )
+def load_reported_condition_data(condition_dates: pd.Series, crop: str) -> pd.DataFrame:
+    rows: list[dict] = []
+    for report_date in sorted(condition_dates.dropna().unique()):
+        date = pd.Timestamp(report_date)
+        text = load_crop_progress_report_text(date.strftime("%Y-%m-%d"))
+        values = extract_reported_condition_values(text, crop)
+        if values is None:
+            continue
+        for condition, value in values.items():
+            rows.append(
+                {
+                    "report_date": date,
+                    "week_of_year": int(date.isocalendar().week),
+                    "condition": condition,
+                    "value": value,
+                }
+            )
+    return pd.DataFrame(rows, columns=["report_date", "week_of_year", "condition", "value"])
 
 
 def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
@@ -479,25 +489,27 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
     if season_start is not None:
         plot_df = plot_df[plot_df["report_date"] >= season_start]
     plot_df = plot_df.dropna(subset=["value", "week_of_year"])
-    hist_df = df[df["year"] < current_year].dropna(subset=["value", "week_of_year"]).copy()
 
     fig = go.Figure()
-    current_stages = set(plot_df["stage"].dropna().unique().tolist())
-    hist_stages = set(hist_df["stage"].dropna().unique().tolist())
-    stages = sorted(current_stages | hist_stages)
+    stages = sorted(plot_df["stage"].dropna().unique().tolist())
     crop = str(df["crop"].iloc[0]) if not df.empty else ""
     for stage in stages:
         stage_color = PROGRESS_COLORS.get(stage, "#4b5563")
-        hist_stage = hist_df[hist_df["stage"] == stage]
-        if not hist_stage.empty:
-            hist_avg = build_aligned_five_year_average(hist_stage, selected_date, anchor_df=hist_df)
-            published_avg = load_published_five_year_average(selected_date, crop, stage)
-            if not published_avg.empty:
-                hist_avg = pd.concat(
-                    [hist_avg[~hist_avg["week_of_year"].isin(published_avg["week_of_year"])], published_avg],
-                    ignore_index=True,
-                ).sort_values("week_of_year")
-            hist_x, hist_y, _ = build_broken_line_arrays(hist_avg, date_col=None)
+        report_stage = load_reported_progress_series(
+            plot_df[plot_df["stage"] == stage],
+            crop,
+            stage,
+        ).sort_values("report_date")
+        if report_stage.empty:
+            continue
+
+        published_avg = (
+            report_stage[["week_of_year", "five_year_average"]]
+            .dropna(subset=["five_year_average"])
+            .rename(columns={"five_year_average": "value"})
+        )
+        if not published_avg.empty:
+            hist_x, hist_y, _ = build_broken_line_arrays(published_avg, date_col=None)
             fig.add_trace(
                 go.Scatter(
                     x=hist_x,
@@ -512,10 +524,7 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
                 )
             )
 
-        stage_df = plot_df[plot_df["stage"] == stage].sort_values("report_date")
-        if stage_df.empty:
-            continue
-        x_vals, y_vals, custom_vals = build_broken_line_arrays(stage_df)
+        x_vals, y_vals, custom_vals = build_broken_line_arrays(report_stage)
         fig.add_trace(
             go.Scatter(
                 x=x_vals,
@@ -528,7 +537,7 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
                 hovertemplate="%{fullData.name}<br>Week %{x}<br>%{y:.0f}%<br>%{customdata}<extra></extra>",
             )
         )
-        last_row = stage_df.iloc[-1]
+        last_row = report_stage.iloc[-1]
         fig.add_annotation(
             x=float(last_row["week_of_year"]),
             y=float(last_row["value"]),
@@ -617,23 +626,20 @@ def build_condition_stacked_bar(
     plot_df = df[(df["year"] == current_year) & (df["report_date"] <= selected_date)].copy()
     if season_start is not None:
         plot_df = plot_df[plot_df["report_date"] >= season_start]
-    plot_df = plot_df.dropna(subset=["value", "week_of_year"])
+    crop = str(df["crop"].iloc[0]) if not df.empty else ""
+    plot_df = load_reported_condition_data(plot_df["report_date"], crop)
 
-    weekly = (
-        plot_df.groupby(["week_of_year", "condition"], as_index=False)["value"]
-        .sum()
-        .pivot(index="week_of_year", columns="condition", values="value")
-        .fillna(0.0)
-        .reindex(columns=CONDITION_ORDER, fill_value=0.0)
-        .sort_index()
-    )
+    weekly = plot_df.pivot(index="week_of_year", columns="condition", values="value").reindex(
+        columns=CONDITION_ORDER
+    ).sort_index()
 
     fig = go.Figure()
     for condition in CONDITION_ORDER:
+        values = weekly[condition].dropna()
         fig.add_trace(
             go.Bar(
-                x=weekly.index.tolist(),
-                y=weekly[condition].tolist(),
+                x=values.index.tolist(),
+                y=values.tolist(),
                 name=condition.title(),
                 marker_color=CONDITION_COLORS[condition],
                 hovertemplate=f"{condition.title()}<br>Week %{{x}}<br>%{{y:.0f}}%<extra></extra>",
@@ -724,8 +730,8 @@ def render_crop_progress_condition():
     st.write(
         """
         Weekly crop progress and crop condition data come from USDA NASS Quick Stats and are cached locally.
-        This page focuses on national weekly series for the selected crop. For the selected progress report
-        week, published five-year comparisons are read from the official Crop Progress report when available.
+        The Progress and Condition Breakdown charts reproduce selected-states values reported in the
+        official USDA Crop Progress reports; no averages or condition values are calculated in the app.
         """
     )
 
