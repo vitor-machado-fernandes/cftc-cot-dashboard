@@ -407,13 +407,11 @@ def load_crop_progress_report_text(report_date: str) -> str:
     return response.text
 
 
-def extract_selected_states_row(report_text: str, table_heading: str) -> list[float | None] | None:
-    if not report_text:
-        return None
-
+def extract_published_five_year_average(report_text: str, crop: str, stage: str) -> float | None:
+    table_heading = f"{crop} {stage.title()} - Selected States".lower()
     in_table = False
     for line in report_text.splitlines():
-        if table_heading.lower() in line.lower():
+        if table_heading in line.lower():
             in_table = True
             continue
         if not in_table:
@@ -421,32 +419,54 @@ def extract_selected_states_row(report_text: str, table_heading: str) -> list[fl
         if " - Selected States" in line:
             return None
         if re.search(r"^\s*\d+\s+States\s+\.+:", line):
-            value_text = line.rsplit(":", maxsplit=1)[-1]
-            values = re.findall(r"\d+|\(NA\)|-", value_text)
-            return [float(value) if value.isdigit() else (0.0 if value == "-" else None) for value in values]
+            values = re.findall(r"\d+|\(NA\)|-", line.rsplit(":", maxsplit=1)[-1])
+            return float(values[-1]) if values and values[-1].isdigit() else None
     return None
 
 
-def extract_reported_progress_values(report_text: str, crop: str, stage: str) -> tuple[float, float | None] | None:
-    values = extract_selected_states_row(report_text, f"{crop} {stage.title()} - Selected States")
-    if not values or len(values) < 4 or values[-2] is None:
-        return None
-    return values[-2], values[-1]
+def load_published_five_year_average(selected_date: pd.Timestamp, crop: str, stage: str) -> pd.DataFrame:
+    report_text = load_crop_progress_report_text(selected_date.strftime("%Y-%m-%d"))
+    value = extract_published_five_year_average(report_text, crop, stage)
+    if value is None:
+        return pd.DataFrame(columns=["week_of_year", "value"])
+    return pd.DataFrame([{"week_of_year": int(selected_date.isocalendar().week), "value": value}])
 
 
-def load_published_five_year_averages(
+def build_five_year_average(
     stage_df: pd.DataFrame,
-    crop: str,
-    stage: str,
+    selected_date: pd.Timestamp,
+    anchor_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    rows: list[dict] = []
-    for report_date in sorted(stage_df["report_date"].dropna().unique()):
-        date = pd.Timestamp(report_date)
-        text = load_crop_progress_report_text(date.strftime("%Y-%m-%d"))
-        values = extract_reported_progress_values(text, crop, stage)
-        if values is not None and values[1] is not None:
-            rows.append({"week_of_year": int(date.isocalendar().week), "value": values[1]})
-    return pd.DataFrame(rows, columns=["week_of_year", "value"])
+    current_year = int(selected_date.year)
+    prior_five_years = set(range(current_year - 5, current_year))
+    historical = stage_df[stage_df["year"].isin(prior_five_years)].copy()
+    anchors = anchor_df[anchor_df["year"].isin(prior_five_years)].copy()
+    if historical.empty or anchors.empty:
+        return pd.DataFrame(columns=["week_of_year", "value"])
+
+    selected_week = int(selected_date.isocalendar().week)
+    aligned_frames: list[pd.DataFrame] = []
+    for year, year_df in historical.groupby("year"):
+        year_anchors = anchors[anchors["year"] == year]["report_date"].drop_duplicates()
+        if year_anchors.empty:
+            continue
+        comparable_dates = year_anchors + pd.DateOffset(years=current_year - int(year))
+        anchor_index = (comparable_dates - selected_date).abs().idxmin()
+        anchor_date = year_anchors.loc[anchor_index]
+        aligned = year_df.copy()
+        aligned["week_of_year"] = selected_week + (
+            (aligned["report_date"] - anchor_date).dt.days / 7
+        ).round().astype(int)
+        aligned_frames.append(aligned)
+
+    if not aligned_frames:
+        return pd.DataFrame(columns=["week_of_year", "value"])
+    return (
+        pd.concat(aligned_frames, ignore_index=True)
+        .groupby("week_of_year", as_index=False)["value"]
+        .mean()
+        .sort_values("week_of_year")
+    )
 
 
 def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Figure:
@@ -456,17 +476,42 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
     if season_start is not None:
         plot_df = plot_df[plot_df["report_date"] >= season_start]
     plot_df = plot_df.dropna(subset=["value", "week_of_year"])
+    hist_df = df[df["year"] < current_year].dropna(subset=["value", "week_of_year"]).copy()
 
     fig = go.Figure()
-    stages = sorted(plot_df["stage"].dropna().unique().tolist())
+    current_stages = set(plot_df["stage"].dropna().unique().tolist())
+    hist_stages = set(hist_df["stage"].dropna().unique().tolist())
+    stages = sorted(current_stages | hist_stages)
     crop = str(df["crop"].iloc[0]) if not df.empty else ""
     for stage in stages:
         stage_color = PROGRESS_COLORS.get(stage, "#4b5563")
         stage_df = plot_df[plot_df["stage"] == stage].sort_values("report_date")
+
+        hist_avg = build_five_year_average(hist_df[hist_df["stage"] == stage], selected_date, hist_df)
+        if not stage_df.empty:
+            published_avg = load_published_five_year_average(selected_date, crop, stage)
+            if not published_avg.empty:
+                hist_avg = pd.concat(
+                    [hist_avg[~hist_avg["week_of_year"].isin(published_avg["week_of_year"])], published_avg],
+                    ignore_index=True,
+                ).sort_values("week_of_year")
+        if not hist_avg.empty:
+            hist_x, hist_y, _ = build_broken_line_arrays(hist_avg, date_col=None)
+            fig.add_trace(
+                go.Scatter(
+                    x=hist_x,
+                    y=hist_y,
+                    mode="lines",
+                    name=f"{stage.title()} 5Y Avg",
+                    line=dict(width=1.5, dash="dot", color=stage_color),
+                    opacity=0.55,
+                    connectgaps=False,
+                    hovertemplate=f"{stage.title()} 5Y avg<br>Week %{{x}}<br>%{{y:.0f}}%<extra></extra>",
+                    showlegend=False,
+                )
+            )
         if stage_df.empty:
             continue
-
-        published_avg = load_published_five_year_averages(stage_df, crop, stage)
         x_vals, y_vals, custom_vals = build_broken_line_arrays(stage_df)
         fig.add_trace(
             go.Scatter(
@@ -491,21 +536,6 @@ def build_progress_lines(df: pd.DataFrame, selected_date: pd.Timestamp) -> go.Fi
             xshift=8,
             font=dict(color=stage_color, size=12),
         )
-        if not published_avg.empty:
-            hist_x, hist_y, _ = build_broken_line_arrays(published_avg, date_col=None)
-            fig.add_trace(
-                go.Scatter(
-                    x=hist_x,
-                    y=hist_y,
-                    mode="lines",
-                    name=f"{stage.title()} 5Y Avg",
-                    line=dict(width=2, dash="dot", color=stage_color),
-                    opacity=0.8,
-                    connectgaps=False,
-                    hovertemplate=f"{stage.title()} 5Y avg<br>Week %{{x}}<br>%{{y:.0f}}%<extra></extra>",
-                    showlegend=False,
-                )
-            )
 
     fig.add_vline(x=int(selected_date.isocalendar().week), line_dash="dash", line_color="black")
     fig.update_layout(title=f"Progress ({current_year})")
@@ -687,8 +717,8 @@ def render_crop_progress_condition():
     st.write(
         """
         Weekly crop progress and crop condition data come from USDA NASS Quick Stats and are cached locally.
-        The Progress and Condition Breakdown charts plot USDA-reported values directly. Published five-year
-        comparisons shown on the Progress chart are read from the official Crop Progress reports when available.
+        The Progress and Condition Breakdown charts plot USDA-reported values. Five-year progress comparisons
+        are aligned to comparable report dates; the selected week's published average is used when available.
         """
     )
 
