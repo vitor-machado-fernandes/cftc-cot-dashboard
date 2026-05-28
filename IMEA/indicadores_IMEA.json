@@ -1,0 +1,2540 @@
+[
+  {
+    "id": "783",
+    "nome": "Custeio",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "784",
+    "nome": "Sementes",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "785",
+    "nome": "Semente de Algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "786",
+    "nome": "Semente de Cobertura",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "787",
+    "nome": "Fertilizantes e Corretivos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "788",
+    "nome": "Corretivo de Solo",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "789",
+    "nome": "Macronutriente",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "790",
+    "nome": "Micronutriente",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "791",
+    "nome": "Defensivos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "792",
+    "nome": "Fungicida",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "793",
+    "nome": "Herbicida",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "794",
+    "nome": "Inseticida",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "795",
+    "nome": "Adjuvante/Outros",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "796",
+    "nome": "Outros Insumos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "797",
+    "nome": "Operações Mecanizadas",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "798",
+    "nome": "Manejo Pré Plantio",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "799",
+    "nome": "Adubação e Plantio",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "800",
+    "nome": "Aplicações com Máquinas",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "801",
+    "nome": "Aplicações com Avião",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "802",
+    "nome": "Colheita",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "803",
+    "nome": "Manejo Pós Colheita",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "804",
+    "nome": "Serviços Terceirizados",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "805",
+    "nome": "Mão de Obra",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "806",
+    "nome": "Permanente",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "807",
+    "nome": "Temporária",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "808",
+    "nome": "Manutenção",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "809",
+    "nome": "Manutenção Máq. Equip. Utilit.",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "810",
+    "nome": "Manutenção Benfeitorias",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "811",
+    "nome": "Impostos e Taxas ",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "812",
+    "nome": "Funrural",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "813",
+    "nome": "Fethab I",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "814",
+    "nome": "Fethab II",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "815",
+    "nome": "ITR",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "816",
+    "nome": "Ima-MT",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "817",
+    "nome": "ICMS",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "818",
+    "nome": "Outros Impostos e Taxas",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "819",
+    "nome": "Financeiras",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "820",
+    "nome": "Financiamentos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "821",
+    "nome": "Seguro da Produção",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "822",
+    "nome": "Seguro Máq. Equip. Utilit.",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "823",
+    "nome": "Pós-Produção",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "824",
+    "nome": "Classificação e Beneficiamento",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "825",
+    "nome": "Armazenagem",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "826",
+    "nome": "Transporte da Produção",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "827",
+    "nome": "Outros Custos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "828",
+    "nome": "Assistência Técnica",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "829",
+    "nome": "Combustível Utilitários",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "830",
+    "nome": "Despesas Gerais",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "831",
+    "nome": "Arrendamento",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "832",
+    "nome": "Custo Operacional Efetivo",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "833",
+    "nome": "Depreciações",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "834",
+    "nome": "Depreciação Máquinas",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "835",
+    "nome": "Depreciação Implementos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "836",
+    "nome": "Depreciação Equipamentos",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "837",
+    "nome": "Depreciação Utilitários",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "838",
+    "nome": "Depreciação Benfeitorias",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "839",
+    "nome": "Mão-de-obra Familiar",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "840",
+    "nome": "Pró-Labore",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "841",
+    "nome": "Custo Operacional Total",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "842",
+    "nome": "Custo de Oportunidade",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "843",
+    "nome": "Custo de Oportunidade da Terra",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "844",
+    "nome": "Capital Circulante",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "845",
+    "nome": "Máquinas, Implem., Equip. e Utilit.",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "846",
+    "nome": "Benfeitorias",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "847",
+    "nome": "Custo Total",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "702638438449152000",
+    "nome": "Área de algodão 1° safra",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "702741552581836800",
+    "nome": "Área de algodão 2° safra",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "702743499787468800",
+    "nome": "Área de algodão total",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "702749579498225664",
+    "nome": "Produção de algodão em caroço",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "703126874901708800",
+    "nome": "Comercialização de pluma de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "703133830240534528",
+    "nome": "Comercialização de caroço de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "703400820041580544",
+    "nome": "Preço médio mensal de comercialização de pluma de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "703422953136324608",
+    "nome": "Preço médio mensal de comercialização de caroço de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "703492383711166464",
+    "nome": "Colheita de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "705576963633053696",
+    "nome": "Semeadura de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "705584882680332288",
+    "nome": "Preço de torta de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "705585193780248576",
+    "nome": "Preço de óleo de algodão disponível ",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "708192508847325184",
+    "nome": "Preço do frete de pluma de algodão",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "708192508893462528",
+    "nome": "Produtividade de algodão em caroço",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "708192508935405569",
+    "nome": "Preço de pluma paridade contrato de julho",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "708192508935405570",
+    "nome": "Preço de pluma disponível",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "708192508943794176",
+    "nome": "Preço de caroço de algodão disponível",
+    "cadeiaId": "1",
+    "cadeiaNome": "Algodão"
+  },
+  {
+    "id": "708192508809576449",
+    "nome": "Escala de abate dos frigoríficos",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576454",
+    "nome": "Preço do boi gordo a prazo",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576455",
+    "nome": "Preço da vaca gorda a prazo",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576456",
+    "nome": "Preço do boi gordo à vista",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576457",
+    "nome": "Preço da vaca gorda à vista",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576467",
+    "nome": "Preço da bezerra 8 meses (Nelore de 150 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576468",
+    "nome": "Preço do bezerro 8 meses (Nelore de 165 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508809576469",
+    "nome": "Preço da bezerra 12 meses (Nelore de 180 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770752",
+    "nome": "Preço do bezerro 12 meses (Nelore de 210 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770753",
+    "nome": "Preço da novilha 18 meses (Nelore de 255 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770754",
+    "nome": "Preço do garrote 18 meses (Nelore de 285 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770755",
+    "nome": "Preço da vaca solteira (Nelore de 315 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770756",
+    "nome": "Preço do boi magro (Nelore de 360 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770757",
+    "nome": "Preço da vaca parida (Nelore de 375 kg)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508813770758",
+    "nome": "Preço do tourinho nelore de 660 kg",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508817965066",
+    "nome": "Preço do traseiro com osso do boi",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508817965068",
+    "nome": "Preço do dianteiro com osso do boi",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508817965069",
+    "nome": "Preço da ponta de agulha do boi",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "708192508817965070",
+    "nome": "Preço da carcaça casada do boi",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "724800443246313472",
+    "nome": "Abate de bovinos machos",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "724801648060137472",
+    "nome": "Abate de bovinos fêmeas",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "724802950588661760",
+    "nome": "Rebanho de bovinos total (Fonte: Indea-MT)",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "796154541765599232",
+    "nome": "Utilização da capacidade frigorífica",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "1000295618081398784",
+    "nome": "Prêmio Boi China à prazo",
+    "cadeiaId": "2",
+    "cadeiaNome": "Bovinocultura de Corte"
+  },
+  {
+    "id": "523",
+    "nome": "Custeio",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "524",
+    "nome": "Sementes",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "526",
+    "nome": "Semente de Cobertura",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "527",
+    "nome": "Fertilizantes e Corretivos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "528",
+    "nome": "Corretivo de Solo",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "529",
+    "nome": "Macronutriente",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "530",
+    "nome": "Micronutriente",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "531",
+    "nome": "Defensivos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "532",
+    "nome": "Fungicida",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "533",
+    "nome": "Herbicida",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "534",
+    "nome": "Inseticida",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "535",
+    "nome": "Adjuvante/Outros",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "536",
+    "nome": "Outros Insumos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "537",
+    "nome": "Operações Mecanizadas",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "538",
+    "nome": "Manejo Pré Plantio",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "539",
+    "nome": "Adubação e Plantio",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "540",
+    "nome": "Aplicações com Máquinas",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "541",
+    "nome": "Aplicações com Avião",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "542",
+    "nome": "Colheita",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "543",
+    "nome": "Manejo Pós Colheita",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "544",
+    "nome": "Serviços Terceirizados",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "545",
+    "nome": "Mão de Obra",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "546",
+    "nome": "Permanente",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "547",
+    "nome": "Temporária",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "548",
+    "nome": "Manutenção",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "549",
+    "nome": "Manutenção Máq. Equip. Utilit.",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "550",
+    "nome": "Manutenção Benfeitorias",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "551",
+    "nome": "Impostos e Taxas",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "552",
+    "nome": "Funrural",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "553",
+    "nome": "Fethab I",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "555",
+    "nome": "ITR",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "558",
+    "nome": "Outros Impostos e Taxas",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "559",
+    "nome": "Financeiras",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "560",
+    "nome": "Financiamentos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "561",
+    "nome": "Seguro da Produção",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "562",
+    "nome": "Seguro Máq. Equip. Utilit.",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "563",
+    "nome": "Pós-Produção",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "564",
+    "nome": "Classificação e Beneficiamento",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "565",
+    "nome": "Armazenagem",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "566",
+    "nome": "Transporte da Produção",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "567",
+    "nome": "Outros Custos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "568",
+    "nome": "Assistência Técnica",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "569",
+    "nome": "Combustível Utilitários",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "570",
+    "nome": "Despesas Gerais",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "571",
+    "nome": "Arrendamento",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "572",
+    "nome": "Custo Operacional Efetivo",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "573",
+    "nome": "Depreciações",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "574",
+    "nome": "Depreciação Máquinas",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "575",
+    "nome": "Depreciação Implementos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "576",
+    "nome": "Depreciação Equipamentos",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "577",
+    "nome": "Depreciação Utilitários",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "578",
+    "nome": "Depreciação Benfeitorias",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "579",
+    "nome": "Mão-de-obra Familiar",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "580",
+    "nome": "Pró-Labore",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "581",
+    "nome": "Custo Operacional Total",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "582",
+    "nome": "Custo de Oportunidade",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "583",
+    "nome": "Custo de Oportunidade da Terra",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "584",
+    "nome": "Capital Circulante",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "585",
+    "nome": "Máquinas, Implem., Equip. e Utilit.",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "586",
+    "nome": "Benfeitorias",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "587",
+    "nome": "Custo Total",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "698758563422273536",
+    "nome": "Comercialização de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "700940565361721344",
+    "nome": "Área de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "701185771642290176",
+    "nome": "Produção de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "701194393889800192",
+    "nome": "Preço mensal de comercialização de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "701199398680133632",
+    "nome": "Produtividade de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "701211800784076800",
+    "nome": "Semeadura de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "708192508838936581",
+    "nome": "Preço milho disponível compra",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "708192508847325187",
+    "nome": "Colheita de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "708192508939599875",
+    "nome": "Preço de milho paridade contrato de julho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1133615317237309440",
+    "nome": "Semente de milho",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582144",
+    "nome": "Impostos e Taxas (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582145",
+    "nome": "Assistência Técnica (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582146",
+    "nome": "Armazenagem (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582147",
+    "nome": "Custeio (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582148",
+    "nome": "Semente de Cobertura (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582149",
+    "nome": "Macronutriente (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582150",
+    "nome": "Micronutriente (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582151",
+    "nome": "Fungicida (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582152",
+    "nome": "Herbicida (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582153",
+    "nome": "Inseticida (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582154",
+    "nome": "Adjuvante/Outros (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582155",
+    "nome": "Corretivo de Solo (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582156",
+    "nome": "Outros Insumos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582157",
+    "nome": "Colheita (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582158",
+    "nome": "Permanente (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582159",
+    "nome": "Funrural (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582160",
+    "nome": "Fethab I (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582161",
+    "nome": "ITR (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582162",
+    "nome": "Outros Impostos e Taxas (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582163",
+    "nome": "Financeiras (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582164",
+    "nome": "Financiamentos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582165",
+    "nome": "Outros Custos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582166",
+    "nome": "Aplicações com Máquinas (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582167",
+    "nome": "Classificação e Beneficiamento (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582168",
+    "nome": "Manejo Pré Plantio (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582169",
+    "nome": "Manutenção (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582170",
+    "nome": "Manutenção Benfeitorias (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582171",
+    "nome": "Manutenção Máq. Equip. Utilit. (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582172",
+    "nome": "Mão de Obra (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582173",
+    "nome": "Operações Mecanizadas (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582174",
+    "nome": "Pós-Produção (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582175",
+    "nome": "Seguro da Produção (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582176",
+    "nome": "Seguro Máq. Equip. Utilit. (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582177",
+    "nome": "Serviços Terceirizados (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582178",
+    "nome": "Temporária (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582179",
+    "nome": "Transporte da Produção (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582180",
+    "nome": "Despesas Gerais (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582181",
+    "nome": "Arrendamento (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582182",
+    "nome": "Custo Operacional Efetivo (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582183",
+    "nome": "Custo Operacional Total (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582184",
+    "nome": "Custo de Oportunidade (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582185",
+    "nome": "Custo de Oportunidade da Terra (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582186",
+    "nome": "Capital Circulante (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582187",
+    "nome": "Benfeitorias (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582188",
+    "nome": "Custo Total (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582189",
+    "nome": "Defensivos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582190",
+    "nome": "Sementes (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582191",
+    "nome": "Fertilizantes e Corretivos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582192",
+    "nome": "Semente de milho (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582193",
+    "nome": "Adubação e Plantio (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582194",
+    "nome": "Depreciações (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582195",
+    "nome": "Depreciação Benfeitorias (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582196",
+    "nome": "Depreciação Equipamentos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582197",
+    "nome": "Depreciação Implementos (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582198",
+    "nome": "Depreciação Máquinas (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582199",
+    "nome": "Depreciação Utilitários (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582200",
+    "nome": "Mão-de-obra Familiar (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582201",
+    "nome": "Máquinas, Implem., Equip. e Utilit. (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582202",
+    "nome": "Pró-Labore (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582203",
+    "nome": "Combustível Utilitários (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582204",
+    "nome": "Manejo Pós Colheita (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "1516955774961582205",
+    "nome": "Aplicações com Avião (Média Tecnologia)",
+    "cadeiaId": "3",
+    "cadeiaNome": "Milho"
+  },
+  {
+    "id": "718",
+    "nome": "Custeio",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "719",
+    "nome": "Sementes",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "721",
+    "nome": "Semente de Cobertura",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "722",
+    "nome": "Fertilizantes e Corretivos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "723",
+    "nome": "Corretivo de Solo",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "726",
+    "nome": "Defensivos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "727",
+    "nome": "Fungicida",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "728",
+    "nome": "Herbicida",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "730",
+    "nome": "Adjuvante/Outros",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "731",
+    "nome": "Outros Insumos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "732",
+    "nome": "Operações Mecanizadas",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "733",
+    "nome": "Manejo Pré Plantio",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "734",
+    "nome": "Adubação e Plantio",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "735",
+    "nome": "Aplicações com Máquinas",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "736",
+    "nome": "Aplicações com Avião",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "737",
+    "nome": "Colheita",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "738",
+    "nome": "Manejo Pós Colheita",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "739",
+    "nome": "Serviços Terceirizados",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "740",
+    "nome": "Mão de Obra",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "741",
+    "nome": "Permanente",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "742",
+    "nome": "Temporária",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "743",
+    "nome": "Manutenção",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "744",
+    "nome": "Manutenção Máq. Equip. Utilit.",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "745",
+    "nome": "Manutenção Benfeitorias",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "746",
+    "nome": "Impostos e Taxas ",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "747",
+    "nome": "Funrural",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "748",
+    "nome": "Fethab I",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "749",
+    "nome": "Fethab II",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "750",
+    "nome": "ITR",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "753",
+    "nome": "Outros Impostos e Taxas",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "754",
+    "nome": "Financeiras",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "755",
+    "nome": "Financiamentos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "756",
+    "nome": "Seguro da Produção",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "757",
+    "nome": "Seguro Máq. Equip. Utilit.",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "759",
+    "nome": "Classificação e Beneficiamento",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "762",
+    "nome": "Outros Custos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "763",
+    "nome": "Assistência Técnica",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "764",
+    "nome": "Combustível Utilitários",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "765",
+    "nome": "Despesas Gerais",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "766",
+    "nome": "Arrendamento",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "768",
+    "nome": "Depreciações",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "769",
+    "nome": "Depreciação Máquinas",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "770",
+    "nome": "Depreciação Implementos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "771",
+    "nome": "Depreciação Equipamentos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "772",
+    "nome": "Depreciação Utilitários",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "773",
+    "nome": "Depreciação Benfeitorias",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "774",
+    "nome": "Mão-de-obra Familiar",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "775",
+    "nome": "Pró-Labore",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "776",
+    "nome": "Custo Operacional Total",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "777",
+    "nome": "Custo de Oportunidade",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "778",
+    "nome": "Custo de Oportunidade da Terra",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "779",
+    "nome": "Capital Circulante",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "780",
+    "nome": "Máquinas, Implem., Equip. e Utilit.",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "781",
+    "nome": "Benfeitorias",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "782",
+    "nome": "Custo Total",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "701276578961424384",
+    "nome": "Área de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "702379488671694848",
+    "nome": "Produção de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "702389895595556864",
+    "nome": "Comercialização de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "702392058614906880",
+    "nome": "Produtividade de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "702651198968954880",
+    "nome": "Preço médio mensal de comercialização de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "705907228083486720",
+    "nome": "Preço disponível de Farelo de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "705907578567917568",
+    "nome": "Preço disponível de Óleo de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "708192508838936580",
+    "nome": "Preço soja disponível compra",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "708192508843130882",
+    "nome": "Preço disponível do Frete de Grãos",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "708192508847325188",
+    "nome": "Colheita de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "708192508889268224",
+    "nome": "Semeadura de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "708192508931211268",
+    "nome": "Esmagamento de soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "708192508935405572",
+    "nome": "Preço de soja paridade contrato de março",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133609936989659136",
+    "nome": "Semente de Soja",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133610659773095936",
+    "nome": "Macronutriente",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133611163982962688",
+    "nome": "Micronutriente",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133613419646099456",
+    "nome": "Inseticida ",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133614011210735616",
+    "nome": "Facs",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133618413560602624",
+    "nome": "Pós-Produção",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133619035009654784",
+    "nome": "Armazenagem",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1133619551852765184",
+    "nome": "Transporte da Produção",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582081",
+    "nome": "Sementes (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582082",
+    "nome": "Outros Impostos e Taxas (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582083",
+    "nome": "Semente de Soja (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582084",
+    "nome": "Semente de Cobertura (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582085",
+    "nome": "Fertilizantes e Corretivos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582086",
+    "nome": "Corretivo de Solo (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582087",
+    "nome": "Fungicida (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582088",
+    "nome": "Herbicida (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582089",
+    "nome": "Adjuvante/Outros (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582090",
+    "nome": "Outros Insumos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582091",
+    "nome": "Aplicações com Máquinas (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582092",
+    "nome": "Manejo Pré Plantio (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582093",
+    "nome": "Operações Mecanizadas (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582094",
+    "nome": "Colheita (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582095",
+    "nome": "Permanente (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582096",
+    "nome": "Impostos e Taxas  (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582097",
+    "nome": "Funrural (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582098",
+    "nome": "Fethab I (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582099",
+    "nome": "Fethab II (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582100",
+    "nome": "ITR (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582101",
+    "nome": "Financeiras (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582102",
+    "nome": "Financiamentos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582103",
+    "nome": "Outros Custos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582104",
+    "nome": "Despesas Gerais (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582105",
+    "nome": "Arrendamento (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582106",
+    "nome": "Custo Operacional Total (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582107",
+    "nome": "Custo de Oportunidade (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582108",
+    "nome": "Custo de Oportunidade da Terra (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582109",
+    "nome": "Capital Circulante (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582110",
+    "nome": "Benfeitorias (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582111",
+    "nome": "Custo Total (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582112",
+    "nome": "Defensivos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582113",
+    "nome": "Macronutriente (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582114",
+    "nome": "Assistência Técnica (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582115",
+    "nome": "Classificação e Beneficiamento (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582116",
+    "nome": "Combustível Utilitários (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582117",
+    "nome": "Depreciações (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582118",
+    "nome": "Depreciação Benfeitorias (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582119",
+    "nome": "Depreciação Equipamentos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582120",
+    "nome": "Depreciação Implementos (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582121",
+    "nome": "Depreciação Máquinas (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582122",
+    "nome": "Manejo Pós Colheita (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582123",
+    "nome": "Manutenção (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582124",
+    "nome": "Manutenção Benfeitorias (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582125",
+    "nome": "Manutenção Máq. Equip. Utilit. (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582126",
+    "nome": "Mão de Obra (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582127",
+    "nome": "Mão-de-obra Familiar (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582128",
+    "nome": "Pró-Labore (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582129",
+    "nome": "Seguro da Produção (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582130",
+    "nome": "Seguro Máq. Equip. Utilit. (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582131",
+    "nome": "Temporária (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582132",
+    "nome": "Micronutriente (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582133",
+    "nome": "Inseticida  (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582134",
+    "nome": "Facs (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582135",
+    "nome": "Pós-Produção (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582136",
+    "nome": "Armazenagem (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582137",
+    "nome": "Transporte da Produção (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582138",
+    "nome": "Adubação e Plantio (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582139",
+    "nome": "Depreciação Utilitários (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582140",
+    "nome": "Máquinas, Implem., Equip. e Utilit. (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582141",
+    "nome": "Serviços Terceirizados (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582142",
+    "nome": "Aplicações com Avião (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "1516955774961582143",
+    "nome": "Custeio (Convencional)",
+    "cadeiaId": "4",
+    "cadeiaNome": "Soja"
+  },
+  {
+    "id": "964004064270426112",
+    "nome": "Cesta Básica",
+    "cadeiaId": "5",
+    "cadeiaNome": "Conjuntura Econômica"
+  },
+  {
+    "id": "727070707335299226",
+    "nome": "kg do suíno vivo",
+    "cadeiaId": "7",
+    "cadeiaNome": "Suinocultura"
+  },
+  {
+    "id": "727070707335299227",
+    "nome": "Carcaça Comum",
+    "cadeiaId": "7",
+    "cadeiaNome": "Suinocultura"
+  },
+  {
+    "id": "824160955138088960",
+    "nome": "Abate total de suínos machos",
+    "cadeiaId": "7",
+    "cadeiaNome": "Suinocultura"
+  },
+  {
+    "id": "824410556860506112",
+    "nome": "Abate total de suínos fêmeas",
+    "cadeiaId": "7",
+    "cadeiaNome": "Suinocultura"
+  },
+  {
+    "id": "1159368450114527232",
+    "nome": "Produção Carne Suína",
+    "cadeiaId": "7",
+    "cadeiaNome": "Suinocultura"
+  },
+  {
+    "id": "700727906502705152",
+    "nome": "Preço do leite pago ao produtor",
+    "cadeiaId": "8",
+    "cadeiaNome": "Leite"
+  },
+  {
+    "id": "700731223542857728",
+    "nome": "Preço da muçarela no atacado",
+    "cadeiaId": "8",
+    "cadeiaNome": "Leite"
+  },
+  {
+    "id": "708192508796993536",
+    "nome": "Índice de captação de leite",
+    "cadeiaId": "8",
+    "cadeiaNome": "Leite"
+  },
+  {
+    "id": "708192508822159367",
+    "nome": "Preço da manteiga",
+    "cadeiaId": "8",
+    "cadeiaNome": "Leite"
+  },
+  {
+    "id": "708192508826353665",
+    "nome": "Preço do queijo prato",
+    "cadeiaId": "8",
+    "cadeiaNome": "Leite"
+  },
+  {
+    "id": "708192508838936577",
+    "nome": "Preço do leite pasteurizado",
+    "cadeiaId": "8",
+    "cadeiaNome": "Leite"
+  },
+  {
+    "id": "727070707335299235",
+    "nome": "Preço da semente de soja branca convencional (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "727070707335299236",
+    "nome": "Preço da semente de soja branca transgênica (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "727070707335299237",
+    "nome": "Preço do Tratamento de semente industrial Avicta para semente de soja branca (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "727070707335299238",
+    "nome": "Preço do Tratamento de semente industrial Caixa vigor para semente de soja branca (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "727070707335299239",
+    "nome": "Preço do Tratamento de semente industrial crop star para semente de soja branca (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "727070707335299240",
+    "nome": "Preço do Tratamento de semente industrial standak top para semente de soja branca (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "824410556860506199",
+    "nome": "Preço de Semente De Soja Convencional",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "824410556860506200",
+    "nome": "Preço de Semente De Soja Ipro (R$/sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "824410556860506201",
+    "nome": "Preço de Semente De Soja Rr",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959990130488057856",
+    "nome": "Preço do Tratamento de semente industrial Fortenza para semente de soja branca (R$ sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959990820354596864",
+    "nome": "Preço do Tratamento de semente industrial Fortenza Duo 60 para semente de soja branca (R$ sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959991505439629312",
+    "nome": "Preço do Tratamento de semente industrial Fortenza Duo 80 para semente de soja branca (R$ sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959991848172986368",
+    "nome": "Preço do Tratamento de semente industrial Fortenza 60 para semente de soja branca (R$ sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959992295583588352",
+    "nome": "Preço do Tratamento de semente industrial Fortenza 80 para semente de soja branca (R$ sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959992588891267072",
+    "nome": "Preço do Tratamento de semente industrial Fortenza Elite para semente de soja branca (R$ sc40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959993131671953408",
+    "nome": "Preço do Tratamento de semente industrial Fortenza para semente de soja branca (R$ Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959993546362789888",
+    "nome": "Preço do Tratamento de semente industrial Fortenza Duo 60 para semente de soja branca (R$ Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959994558679031808",
+    "nome": "Preço do Tratamento de semente industrial Fortenza 60 para semente de soja branca (R$ Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959995040562618368",
+    "nome": "Preço do Tratamento de semente industrial Fortenza 80 para semente de soja branca (R$ Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "959995371858108416",
+    "nome": "Preço do Tratamento de semente industrial Fortenza Elite para semente de soja branca (R$ Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "960047000431042560",
+    "nome": "Preço do Tratamento de semente industrial Avicta para semente de soja branca (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "960047371777941504",
+    "nome": "Preço do Tratamento de semente industrial Caixa vigor para semente de soja branca (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "960048099347079168",
+    "nome": "Preço do Tratamento de semente industrial crop star para semente de soja branca (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "960048334014193664",
+    "nome": "Preço do Tratamento de semente industrial standak top para semente de soja branca (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "960088918657540096",
+    "nome": "Preço da semente de soja branca convencional (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "960089282274336768",
+    "nome": "Preço da semente de soja branca transgênica (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1224885985160929280",
+    "nome": "Semente de Soja Intacta (R$sc/40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1224886589191036928",
+    "nome": "Preço Semente de Soja Intacta (R$/bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1224930531135660032",
+    "nome": "Preço de Semente de Soja RR (R$sc/40kg)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1224931011849035776",
+    "nome": "Preço de Semente de Soja RR (R$/Bag)",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1357207036887040000",
+    "nome": "Royalty Intacta I2X ",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1357209165752172544",
+    "nome": "Intacta I2X",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  },
+  {
+    "id": "1357258087694598144",
+    "nome": "Intacta I2X Bag ",
+    "cadeiaId": "10",
+    "cadeiaNome": "Custo de Produção"
+  }
+]

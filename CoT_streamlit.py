@@ -33,6 +33,7 @@ from pages_app.n_traders import render_n_traders
 from pages_app.CoT_position import render_position
 from pages_app.concentration import render_concentration
 from pages_app.crop_progress_condition import render_crop_progress_condition
+from pages_app.mato_grosso import render_mato_grosso
 
 
 def render_home():
@@ -51,6 +52,7 @@ def render_home():
 
         - `Concentration`: Shows how concentrated long and short exposure is among the largest traders.
         - `Crop Progress & Condition`: Tracks USDA weekly planting, development, and crop-condition data.
+        - `Mato Grosso`: Tracks Brazil crop data from IMEA.
         - `Number of Traders`: Tracks how many traders are active on the long, short, and spread sides.
         - `On-Call`: Focuses on cotton on-call activity, including unfixed sales and purchases.
         - `Open Interest`: Explores open interest trends and seasonal patterns.
@@ -182,7 +184,16 @@ if should_run_usda_update:
 # ------------------------------------------------
 page = st.sidebar.radio(
     "Select section",
-    ["Home", "Concentration", "Crop Progress & Condition", "Number of Traders", "On-Call", "Open Interest", "Position"]
+    [
+        "Home",
+        "Concentration",
+        "Crop Progress & Condition",
+        "Mato Grosso",
+        "Number of Traders",
+        "On-Call",
+        "Open Interest",
+        "Position",
+    ],
 )
 
 # ------------------------------------------------
@@ -202,4 +213,6 @@ elif page == "Concentration":
     render_concentration()
 elif page == "Crop Progress & Condition":
     render_crop_progress_condition()
+elif page == "Mato Grosso":
+    render_mato_grosso()
 
