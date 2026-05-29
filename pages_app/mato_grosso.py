@@ -1,18 +1,38 @@
 from __future__ import annotations
 
+import json
+import math
 import os
+import zipfile
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+import requests
 import streamlit as st
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 PLANTING_PROGRESS_PATH = BASE_DIR / "IMEA" / "planting_prog_mt.json"
 HARVEST_PROGRESS_PATH = BASE_DIR / "IMEA" / "harvest_prog_mt.json"
 HARVEST_PROGRESS_FALLBACK_PATH = BASE_DIR / "IMEA" / "harvest_prog_mt.txt"
+IMEA_API_BASE_URL = "https://api-imeadigital.imea.com.br/api"
+IMEA_SERIES = {
+    "Planting": {
+        "indicator_id": "705576963633053696",
+        "json_path": PLANTING_PROGRESS_PATH,
+        "excel_path": BASE_DIR / "IMEA" / "planting_prog_mt.xlsx",
+    },
+    "Harvest": {
+        "indicator_id": "703492383711166464",
+        "json_path": HARVEST_PROGRESS_PATH,
+        "excel_path": BASE_DIR / "IMEA" / "harvest_prog_mt.xlsx",
+    },
+}
 STAGE_CONFIG = {
     "Planting": {"current_color": "#2563eb", "avg_color": "#93c5fd"},
     "Harvest": {"current_color": "#16a34a", "avg_color": "#86efac"},
@@ -29,6 +49,307 @@ def _get_imea_credentials() -> tuple[str | None, str | None]:
         password = imea_secrets.get("password") or st.secrets.get("IMEA_PASSWORD")
 
     return email or os.getenv("IMEA_EMAIL"), password or os.getenv("IMEA_PASSWORD")
+
+
+def _read_json_records(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8-sig") as fh:
+        data = json.load(fh)
+    return data if isinstance(data, list) else []
+
+
+def _write_json_records(path: Path, records: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        json.dump(records, fh, ensure_ascii=False, indent=2)
+
+
+def _login_imea() -> str:
+    email, password = _get_imea_credentials()
+    if not email or not password:
+        raise RuntimeError("IMEA credentials are missing from Streamlit secrets.")
+
+    response = _imea_request(
+        "post",
+        f"{IMEA_API_BASE_URL}/Account/login",
+        headers={"accept": "application/json", "Content-Type": "application/json-patch+json"},
+        json={"email": email, "password": password},
+        timeout=30,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    token = payload.get("access_token")
+    if not token:
+        raise RuntimeError("IMEA login succeeded but did not return an access_token.")
+    return token
+
+
+def _imea_get_json(path: str, token: str) -> object:
+    response = _imea_request(
+        "get",
+        f"{IMEA_API_BASE_URL}{path}",
+        headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
+        timeout=45,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def _imea_request(method: str, url: str, **kwargs) -> requests.Response:
+    try:
+        return requests.request(method, url, **kwargs)
+    except requests.exceptions.SSLError:
+        urllib3.disable_warnings(InsecureRequestWarning)
+        return requests.request(method, url, verify=False, **kwargs)
+
+
+def _fetch_available_dates(indicator_id: str, token: str) -> list[str]:
+    payload = _imea_get_json(f"/SerieHistorica/publica/datas/{indicator_id}", token)
+    dates = payload.get("datas", []) if isinstance(payload, dict) else payload
+    return sorted(str(date)[:10] for date in dates)
+
+
+def _fetch_series_date(indicator_id: str, date: str, token: str) -> list[dict]:
+    payload = _imea_get_json(f"/SerieHistorica/publica/{indicator_id}/{date}", token)
+    if isinstance(payload, list):
+        return [record for record in payload if isinstance(record, dict)]
+    if isinstance(payload, dict):
+        return [payload]
+    return []
+
+
+def _record_date(record: dict) -> str | None:
+    value = record.get("data")
+    return str(value)[:10] if value else None
+
+
+def _merge_records(existing: list[dict], additions: list[dict]) -> list[dict]:
+    merged = {str(record.get("Id") or f"{record.get('indicadorFinalId')}-{record.get('data')}-{idx}"): record for idx, record in enumerate(existing)}
+    for idx, record in enumerate(additions, start=len(merged)):
+        key = str(record.get("Id") or f"{record.get('indicadorFinalId')}-{record.get('data')}-{idx}")
+        merged[key] = record
+    return sorted(
+        merged.values(),
+        key=lambda record: (
+            _record_date(record) or "",
+            str(record.get("safraDescricao") or ""),
+            str(record.get("tipoLocalidadeDescricao") or ""),
+            str(record.get("regiaoNome") or ""),
+        ),
+    )
+
+
+def _write_progress_excel(records: list[dict], excel_path: Path) -> None:
+    if not records:
+        return
+
+    raw = pd.json_normalize(records)
+    raw["data"] = pd.to_datetime(raw["data"], errors="coerce")
+    raw["valor"] = pd.to_numeric(raw["valor"], errors="coerce")
+    raw["variacao"] = pd.to_numeric(raw["variacao"], errors="coerce")
+    raw = raw.sort_values(["data", "safraDescricao", "tipoLocalidadeDescricao", "regiaoNome"], na_position="first")
+
+    clean = pd.DataFrame(
+        {
+            "date": raw["data"],
+            "safra": raw["safraDescricao"],
+            "indicator_id": raw["indicadorFinalId"],
+            "indicator": raw["indicadorFinalNome"],
+            "chain": raw["cadeiaNome"],
+            "state": raw["estadoNome"],
+            "state_code": raw["estadoSigla"],
+            "location_type": raw["tipoLocalidadeDescricao"],
+            "region": raw["regiaoNome"],
+            "region_code": raw["regiaoSigla"],
+            "value_pct": raw["valor"],
+            "variation": raw["variacao"],
+            "unit": raw["unidadeSigla"],
+        }
+    )
+    clean["location"] = clean["region"].fillna(clean["state"])
+    clean = clean[
+        [
+            "date",
+            "safra",
+            "indicator_id",
+            "indicator",
+            "chain",
+            "state",
+            "state_code",
+            "location_type",
+            "location",
+            "region",
+            "region_code",
+            "value_pct",
+            "variation",
+            "unit",
+        ]
+    ]
+
+    pivot_src = clean.copy()
+    pivot_src["location"] = pivot_src["location_type"].fillna("") + " - " + pivot_src["location"].fillna("")
+    pivot = pivot_src.pivot_table(
+        index=["date", "safra"],
+        columns="location",
+        values="value_pct",
+        aggfunc="first",
+    ).reset_index()
+    pivot.columns.name = None
+
+    try:
+        writer = pd.ExcelWriter(excel_path, engine="xlsxwriter", datetime_format="yyyy-mm-dd")
+    except ImportError:
+        try:
+            writer = pd.ExcelWriter(excel_path, engine="openpyxl")
+        except ImportError:
+            _write_simple_xlsx(excel_path, {"Clean": clean, "Pivot_by_Location": pivot, "Raw_API": raw})
+            return
+
+    with writer:
+        clean.to_excel(writer, sheet_name="Clean", index=False)
+        pivot.to_excel(writer, sheet_name="Pivot_by_Location", index=False)
+        raw.to_excel(writer, sheet_name="Raw_API", index=False)
+
+
+def _xlsx_col_name(n: int) -> str:
+    value = ""
+    while n:
+        n, remainder = divmod(n - 1, 26)
+        value = chr(65 + remainder) + value
+    return value
+
+
+def _xlsx_cell(row: int, col: int, value: object) -> str:
+    ref = f"{_xlsx_col_name(col)}{row}"
+    if value is None or (isinstance(value, float) and math.isnan(value)) or pd.isna(value):
+        return f'<c r="{ref}"/>'
+    if isinstance(value, bool):
+        return f'<c r="{ref}" t="b"><v>{1 if value else 0}</v></c>'
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return f'<c r="{ref}"><v>{value}</v></c>'
+    if isinstance(value, pd.Timestamp):
+        value = value.strftime("%Y-%m-%d")
+    return f'<c r="{ref}" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>'
+
+
+def _xlsx_sheet(df: pd.DataFrame) -> str:
+    export_df = df.copy()
+    for col in export_df.columns:
+        if pd.api.types.is_datetime64_any_dtype(export_df[col]):
+            export_df[col] = export_df[col].dt.strftime("%Y-%m-%d")
+
+    rows = [
+        '<row r="1">'
+        + "".join(_xlsx_cell(1, idx + 1, col) for idx, col in enumerate(export_df.columns))
+        + "</row>"
+    ]
+    for row_idx, row in enumerate(export_df.itertuples(index=False, name=None), start=2):
+        rows.append(
+            f'<row r="{row_idx}">'
+            + "".join(_xlsx_cell(row_idx, col_idx + 1, value) for col_idx, value in enumerate(row))
+            + "</row>"
+        )
+    last_cell = f"{_xlsx_col_name(max(len(export_df.columns), 1))}{max(len(export_df) + 1, 1)}"
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        f'<dimension ref="A1:{last_cell}"/>'
+        '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" '
+        'activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+        "<sheetData>"
+        + "".join(rows)
+        + "</sheetData></worksheet>"
+    )
+
+
+def _write_simple_xlsx(path: Path, sheets: dict[str, pd.DataFrame]) -> None:
+    sheet_items = list(sheets.items())
+    content_types = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" '
+        'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        + "".join(
+            f'<Override PartName="/xl/worksheets/sheet{i}.xml" '
+            'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+            for i in range(1, len(sheet_items) + 1)
+        )
+        + "</Types>"
+    )
+    root_rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" '
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+        'Target="xl/workbook.xml"/></Relationships>'
+    )
+    workbook = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'
+        + "".join(
+            f'<sheet name="{escape(name)}" sheetId="{idx}" r:id="rId{idx}"/>'
+            for idx, (name, _) in enumerate(sheet_items, start=1)
+        )
+        + "</sheets></workbook>"
+    )
+    workbook_rels = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + "".join(
+            f'<Relationship Id="rId{idx}" '
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" '
+            f'Target="worksheets/sheet{idx}.xml"/>'
+            for idx in range(1, len(sheet_items) + 1)
+        )
+        + "</Relationships>"
+    )
+
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", content_types)
+        zf.writestr("_rels/.rels", root_rels)
+        zf.writestr("xl/workbook.xml", workbook)
+        zf.writestr("xl/_rels/workbook.xml.rels", workbook_rels)
+        for idx, (_, df) in enumerate(sheet_items, start=1):
+            zf.writestr(f"xl/worksheets/sheet{idx}.xml", _xlsx_sheet(df))
+
+
+def refresh_imea_crop_progress() -> dict:
+    token = _login_imea()
+    result = {"updated": False, "messages": []}
+
+    for stage, config in IMEA_SERIES.items():
+        json_path = Path(config["json_path"])
+        excel_path = Path(config["excel_path"])
+        indicator_id = str(config["indicator_id"])
+
+        existing = _read_json_records(json_path)
+        existing_dates = {_record_date(record) for record in existing}
+        existing_dates.discard(None)
+        available_dates = _fetch_available_dates(indicator_id, token)
+        missing_dates = [date for date in available_dates if date not in existing_dates]
+
+        additions = []
+        for date in missing_dates:
+            additions.extend(_fetch_series_date(indicator_id, date, token))
+
+        if additions:
+            updated_records = _merge_records(existing, additions)
+            _write_json_records(json_path, updated_records)
+            _write_progress_excel(updated_records, excel_path)
+            result["updated"] = True
+            result["messages"].append(f"{stage}: added {len(missing_dates)} dates / {len(additions)} rows.")
+        else:
+            if existing:
+                _write_progress_excel(existing, excel_path)
+            result["messages"].append(f"{stage}: already up to date.")
+
+    load_progress_file.clear()
+    return result
 
 
 @st.cache_data
@@ -233,6 +554,19 @@ def render_mato_grosso():
         )
 
     st.subheader("Crop Progress")
+
+    if st.button("Check IMEA updates", key="mato_grosso_update_button"):
+        with st.spinner("Checking IMEA crop progress updates..."):
+            try:
+                update_result = refresh_imea_crop_progress()
+                if update_result["updated"]:
+                    st.success("IMEA crop progress data updated.")
+                else:
+                    st.info("IMEA crop progress data is already up to date.")
+                for message in update_result["messages"]:
+                    st.caption(message)
+            except Exception as exc:
+                st.error(f"IMEA update failed: {exc}")
 
     progress_df, harvest_file_invalid = load_crop_progress()
     if progress_df.empty:
