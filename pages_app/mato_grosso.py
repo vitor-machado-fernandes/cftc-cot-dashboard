@@ -20,6 +20,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 PLANTING_PROGRESS_PATH = BASE_DIR / "IMEA" / "planting_prog_mt.json"
 HARVEST_PROGRESS_PATH = BASE_DIR / "IMEA" / "harvest_prog_mt.json"
 HARVEST_PROGRESS_FALLBACK_PATH = BASE_DIR / "IMEA" / "harvest_prog_mt.txt"
+FARMER_SELLING_PATH = BASE_DIR / "IMEA" / "farmer_selling_mt.json"
 IMEA_API_BASE_URL = "https://api-imeadigital.imea.com.br/api"
 IMEA_SERIES = {
     "Planting": {
@@ -31,6 +32,11 @@ IMEA_SERIES = {
         "indicator_id": "703492383711166464",
         "json_path": HARVEST_PROGRESS_PATH,
         "excel_path": BASE_DIR / "IMEA" / "harvest_prog_mt.xlsx",
+    },
+    "Farmer selling": {
+        "indicator_id": "703126874901708800",
+        "json_path": FARMER_SELLING_PATH,
+        "excel_path": BASE_DIR / "IMEA" / "farmer_selling_mt.xlsx",
     },
 }
 STAGE_CONFIG = {
@@ -197,19 +203,41 @@ def _write_progress_excel(records: list[dict], excel_path: Path) -> None:
     ).reset_index()
     pivot.columns.name = None
 
+    seasonal_statewide = pd.DataFrame()
+    statewide = clean[clean["location_type"] == "Estado"].sort_values(["safra", "date"]).copy()
+    if not statewide.empty:
+        statewide["season_index"] = statewide.groupby("safra").cumcount() + 1
+        seasonal_parts = [pd.DataFrame({"season_index": sorted(statewide["season_index"].unique())})]
+        for safra, safra_df in statewide.groupby("safra", sort=True):
+            safra_df = safra_df[["season_index", "date", "value_pct"]].copy()
+            safra_df = safra_df.rename(
+                columns={
+                    "date": f"{safra}_date",
+                    "value_pct": f"{safra}_value_pct",
+                }
+            )
+            seasonal_parts.append(safra_df)
+        seasonal_statewide = seasonal_parts[0]
+        for part in seasonal_parts[1:]:
+            seasonal_statewide = seasonal_statewide.merge(part, on="season_index", how="left")
+
+    sheets = {"Clean": clean, "Pivot_by_Location": pivot}
+    if not seasonal_statewide.empty:
+        sheets["Seasonal_Statewide"] = seasonal_statewide
+    sheets["Raw_API"] = raw
+
     try:
         writer = pd.ExcelWriter(excel_path, engine="xlsxwriter", datetime_format="yyyy-mm-dd")
     except ImportError:
         try:
             writer = pd.ExcelWriter(excel_path, engine="openpyxl")
         except ImportError:
-            _write_simple_xlsx(excel_path, {"Clean": clean, "Pivot_by_Location": pivot, "Raw_API": raw})
+            _write_simple_xlsx(excel_path, sheets)
             return
 
     with writer:
-        clean.to_excel(writer, sheet_name="Clean", index=False)
-        pivot.to_excel(writer, sheet_name="Pivot_by_Location", index=False)
-        raw.to_excel(writer, sheet_name="Raw_API", index=False)
+        for sheet_name, sheet_df in sheets.items():
+            sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 
 def _xlsx_col_name(n: int) -> str:
@@ -348,7 +376,10 @@ def refresh_imea_crop_progress() -> dict:
                 _write_progress_excel(existing, excel_path)
             result["messages"].append(f"{stage}: already up to date.")
 
-    load_progress_file.clear()
+    if hasattr(load_progress_file, "clear"):
+        load_progress_file.clear()
+    if hasattr(load_farmer_selling, "clear"):
+        load_farmer_selling.clear()
     return result
 
 
@@ -389,6 +420,29 @@ def load_crop_progress() -> tuple[pd.DataFrame, bool]:
     if not frames:
         return pd.DataFrame(), harvest_file_invalid
     return pd.concat(frames, ignore_index=True), harvest_file_invalid
+
+
+@st.cache_data
+def load_farmer_selling(path_str: str, mtime_ns: int | None) -> pd.DataFrame:
+    del mtime_ns
+    path = Path(path_str)
+    if not path.exists():
+        return pd.DataFrame()
+
+    try:
+        df = pd.read_json(path)
+    except ValueError:
+        return pd.DataFrame()
+
+    if df.empty:
+        return df
+
+    df["data"] = pd.to_datetime(df["data"], errors="coerce")
+    df["valor"] = pd.to_numeric(df["valor"], errors="coerce")
+    df = df.dropna(subset=["data", "valor", "safraDescricao"]).copy()
+    df["location"] = df["regiaoNome"].fillna(df["estadoNome"])
+    df["safra_start_year"] = df["safraDescricao"].str[:2].astype(int) + 2000
+    return df.sort_values(["safra_start_year", "location", "data"])
 
 
 def _current_season_start_year(df: pd.DataFrame) -> int:
@@ -542,13 +596,143 @@ def build_crop_progress_chart(df: pd.DataFrame, location: str) -> go.Figure:
     return fig
 
 
+def build_farmer_selling_chart(df: pd.DataFrame, location: str) -> go.Figure:
+    plot_df = df[df["location"] == location].copy()
+    if plot_df.empty:
+        return go.Figure()
+
+    current_start_year = int(plot_df["safra_start_year"].max())
+    plot_df = plot_df[
+        (plot_df["data"].dt.year >= plot_df["safra_start_year"])
+        & (plot_df["data"].dt.year <= plot_df["safra_start_year"] + 1)
+    ].copy()
+    current = plot_df[plot_df["safra_start_year"] == current_start_year].sort_values("data").copy()
+    prior = plot_df[plot_df["safra_start_year"] < current_start_year].copy()
+    complete_prior_years = (
+        prior.groupby("safra_start_year")["data"]
+        .agg(
+            first_year=lambda values: int(values.min().year),
+            last_year=lambda values: int(values.max().year),
+            count="count",
+        )
+        .reset_index()
+    )
+    comparable_years = complete_prior_years.loc[
+        (complete_prior_years["first_year"] == complete_prior_years["safra_start_year"])
+        & (complete_prior_years["last_year"] >= complete_prior_years["safra_start_year"] + 1)
+        & (complete_prior_years["count"] >= 12),
+        "safra_start_year",
+    ].tolist()
+    comparable_years = comparable_years[-3:]
+    prior = prior[prior["safra_start_year"].isin(comparable_years)].copy()
+    if current.empty:
+        return go.Figure()
+
+    axis_start_year = 2000
+
+    def selling_axis_date(row: pd.Series) -> pd.Timestamp:
+        year_offset = int(row["data"].year) - int(row["safra_start_year"])
+        year_offset = max(0, min(1, year_offset))
+        return pd.Timestamp(year=axis_start_year + year_offset, month=int(row["data"].month), day=1)
+
+    current["season_date"] = current.apply(selling_axis_date, axis=1)
+    current = current.sort_values("data").groupby(["safraDescricao", "safra_start_year", "season_date"], as_index=False).tail(1)
+    prior = prior.sort_values(["safra_start_year", "data"]).copy()
+    prior["season_date"] = prior.apply(selling_axis_date, axis=1)
+    prior = prior.sort_values("data").groupby(["safraDescricao", "safra_start_year", "season_date"], as_index=False).tail(1)
+    avg = (
+        prior.groupby("season_date", as_index=False)["valor"].mean().rename(columns={"valor": "three_year_avg"})
+        if not prior.empty
+        else pd.DataFrame(columns=["season_date", "three_year_avg"])
+    )
+
+    fig = go.Figure()
+    if not avg.empty:
+        prior_count = int(prior["safraDescricao"].nunique())
+        avg_label = f"Last {prior_count}-safra avg"
+        fig.add_trace(
+            go.Scatter(
+                x=avg["season_date"],
+                y=avg["three_year_avg"],
+                mode="lines+markers",
+                name=avg_label,
+                line=dict(color="#9ca3af", width=3, dash="dash"),
+                marker=dict(size=7),
+                hovertemplate=f"{avg_label}<br>%{{x|%b %d}}<br>%{{y:.1f}}%<extra></extra>",
+            )
+        )
+
+    prior_colors = ["#64748b", "#475569", "#334155"]
+    prior_years = sorted(prior["safra_start_year"].dropna().unique().tolist())
+    for idx, year in enumerate(prior_years):
+        year_df = prior[prior["safra_start_year"] == year].sort_values("season_date")
+        if year_df.empty:
+            continue
+        safra_label = str(year_df["safraDescricao"].iloc[-1])
+        fig.add_trace(
+            go.Scatter(
+                x=year_df["season_date"],
+                y=year_df["valor"],
+                mode="lines+markers",
+                name=safra_label,
+                line=dict(color=prior_colors[idx % len(prior_colors)], width=2),
+                marker=dict(size=6),
+                hovertemplate=f"{safra_label}<br>%{{x|%b %d}}<br>%{{y:.1f}}%<extra></extra>",
+            )
+        )
+
+    current_safra = str(current["safraDescricao"].iloc[-1])
+    fig.add_trace(
+        go.Scatter(
+            x=current["season_date"],
+            y=current["valor"],
+            mode="lines+markers",
+            name=f"Current ({current_safra})",
+            line=dict(color="#1d4ed8", width=4),
+            marker=dict(size=7),
+            hovertemplate=f"{current_safra}<br>%{{x|%b %d}}<br>%{{y:.1f}}%<extra></extra>",
+        )
+    )
+
+    tick_vals = [pd.Timestamp(year=axis_start_year + offset, month=month, day=1) for offset in [0, 1] for month in range(1, 13)]
+    tick_text = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] * 2
+    x_start = pd.Timestamp(year=axis_start_year, month=1, day=1)
+    x_end = pd.Timestamp(year=axis_start_year + 1, month=12, day=31)
+    fig.update_layout(
+        title=f"Mato Grosso Farmer Selling - {location}",
+        height=420,
+        margin=dict(l=8, r=8, t=56, b=8),
+        paper_bgcolor="#f4f2ed",
+        plot_bgcolor="#f8f7f4",
+        legend_title="",
+        legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0),
+        xaxis=dict(
+            title="",
+            tickmode="array",
+            tickvals=tick_vals,
+            ticktext=tick_text,
+            range=[x_start, x_end],
+            showgrid=True,
+            gridcolor="#d9d9d9",
+            zeroline=False,
+        ),
+        yaxis=dict(
+            title="% Sold",
+            range=[0, 100],
+            ticksuffix="%",
+            showgrid=True,
+            gridcolor="#d9d9d9",
+            zeroline=False,
+        ),
+    )
+    return fig
+
+
 def render_mato_grosso():
     st.header("Mato Grosso")
 
     email, password = _get_imea_credentials()
-    if email and password:
-        st.caption("IMEA credentials are configured.")
-    else:
+    if not email or not password:
         st.info(
             "Add IMEA credentials to `.streamlit/secrets.toml` before enabling automatic data updates."
         )
@@ -585,3 +769,29 @@ def render_mato_grosso():
     latest_date = progress_df.loc[progress_df["location"] == location, "data"].max()
     if pd.notna(latest_date):
         st.caption(f"Source: IMEA. Latest {location} crop progress observation: {latest_date.date()}.")
+
+    st.subheader("Farmer Selling")
+
+    selling_mtime_ns = FARMER_SELLING_PATH.stat().st_mtime_ns if FARMER_SELLING_PATH.exists() else None
+    selling_df = load_farmer_selling(str(FARMER_SELLING_PATH), selling_mtime_ns)
+    if selling_df.empty:
+        st.warning("No IMEA farmer selling data is available locally yet.")
+        return
+
+    selling_locations = ["Mato Grosso"] + sorted(
+        selling_location
+        for selling_location in selling_df["location"].dropna().unique().tolist()
+        if selling_location != "Mato Grosso"
+    )
+    selling_index = selling_locations.index(location) if location in selling_locations else 0
+    selling_location = st.selectbox(
+        "Farmer selling location",
+        selling_locations,
+        index=selling_index,
+        key="mato_grosso_farmer_selling_location",
+    )
+    st.plotly_chart(build_farmer_selling_chart(selling_df, selling_location), use_container_width=True)
+
+    latest_selling_date = selling_df.loc[selling_df["location"] == selling_location, "data"].max()
+    if pd.notna(latest_selling_date):
+        st.caption(f"Source: IMEA. Latest {selling_location} farmer selling observation: {latest_selling_date.date()}.")
