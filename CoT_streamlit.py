@@ -34,6 +34,7 @@ from pages_app.CoT_position import render_position
 from pages_app.concentration import render_concentration
 from pages_app.crop_progress_condition import render_crop_progress_condition
 from pages_app.mato_grosso import render_mato_grosso
+from pages_app.stocks_use import render_stocks_use
 
 
 def render_home():
@@ -57,6 +58,7 @@ def render_home():
         - `On-Call`: Focuses on cotton on-call activity, including unfixed sales and purchases.
         - `Open Interest`: Explores open interest trends and seasonal patterns.
         - `Position`: Displays long, short, spread, and net positioning by trader category.
+        - `Stocks & Use`: Tracks supply, demand, stocks, and use data.
         """
     )
 
@@ -193,6 +195,7 @@ page = st.sidebar.radio(
         "On-Call",
         "Open Interest",
         "Position",
+        "Stocks & Use",
     ],
 )
 
@@ -215,4 +218,6 @@ elif page == "Crop Progress & Condition":
     render_crop_progress_condition()
 elif page == "Mato Grosso":
     render_mato_grosso()
+elif page == "Stocks & Use":
+    render_stocks_use()
 
