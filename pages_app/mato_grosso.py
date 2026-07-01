@@ -4,6 +4,7 @@ import json
 import math
 import os
 import zipfile
+from datetime import date, timedelta
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -125,9 +126,33 @@ def _fetch_series_date(indicator_id: str, date: str, token: str) -> list[dict]:
     return []
 
 
+def _fetch_series_range(indicator_id: str, start_date: str, end_date: str, token: str) -> list[dict]:
+    payload = _imea_get_json(f"/SerieHistorica/publica/{indicator_id}/{start_date}/{end_date}", token)
+    if isinstance(payload, list):
+        return [record for record in payload if isinstance(record, dict)]
+    if isinstance(payload, dict):
+        return [payload]
+    return []
+
+
 def _record_date(record: dict) -> str | None:
     value = record.get("data")
     return str(value)[:10] if value else None
+
+
+def _parse_record_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except ValueError:
+        return None
+
+
+def _latest_record_date(records: list[dict]) -> date | None:
+    dates = [_parse_record_date(_record_date(record)) for record in records]
+    valid_dates = [record_date for record_date in dates if record_date is not None]
+    return max(valid_dates) if valid_dates else None
 
 
 def _merge_records(existing: list[dict], additions: list[dict]) -> list[dict]:
@@ -348,7 +373,7 @@ def _write_simple_xlsx(path: Path, sheets: dict[str, pd.DataFrame]) -> None:
 
 def refresh_imea_crop_progress() -> dict:
     token = _login_imea()
-    result = {"updated": False, "messages": []}
+    result = {"updated": False, "messages": [], "warnings": []}
 
     for stage, config in IMEA_SERIES.items():
         json_path = Path(config["json_path"])
@@ -356,25 +381,60 @@ def refresh_imea_crop_progress() -> dict:
         indicator_id = str(config["indicator_id"])
 
         existing = _read_json_records(json_path)
+        latest_existing_date = _latest_record_date(existing)
         existing_dates = {_record_date(record) for record in existing}
         existing_dates.discard(None)
         available_dates = _fetch_available_dates(indicator_id, token)
         missing_dates = [date for date in available_dates if date not in existing_dates]
 
         additions = []
-        for date in missing_dates:
-            additions.extend(_fetch_series_date(indicator_id, date, token))
+        for missing_date in missing_dates:
+            additions.extend(_fetch_series_date(indicator_id, missing_date, token))
+
+        if latest_existing_date is not None:
+            range_start = latest_existing_date + timedelta(days=1)
+            range_end = date.today()
+            if range_start <= range_end:
+                additions.extend(
+                    _fetch_series_range(
+                        indicator_id,
+                        range_start.isoformat(),
+                        range_end.isoformat(),
+                        token,
+                    )
+                )
 
         if additions:
             updated_records = _merge_records(existing, additions)
             _write_json_records(json_path, updated_records)
             _write_progress_excel(updated_records, excel_path)
             result["updated"] = True
-            result["messages"].append(f"{stage}: added {len(missing_dates)} dates / {len(additions)} rows.")
+            latest_updated_date = _latest_record_date(updated_records)
+            latest_label = latest_updated_date.isoformat() if latest_updated_date else "unknown"
+            added_dates = {_record_date(record) for record in additions}
+            added_dates.discard(None)
+            result["messages"].append(
+                f"{stage}: added {len(added_dates)} observation dates / {len(additions)} rows; latest local date is {latest_label}."
+            )
         else:
             if existing:
                 _write_progress_excel(existing, excel_path)
-            result["messages"].append(f"{stage}: already up to date.")
+            latest_api_date = max(available_dates) if available_dates else None
+            latest_local_label = latest_existing_date.isoformat() if latest_existing_date else "none"
+            latest_api_label = latest_api_date or "none"
+            stale_farmer_selling = (
+                stage == "Farmer selling"
+                and latest_existing_date is not None
+                and latest_existing_date < date.today().replace(day=1)
+            )
+            if stale_farmer_selling:
+                result["warnings"].append(
+                    f"{stage}: local data ends at {latest_local_label}; the IMEA series API/date index also returned no records after {latest_api_label}."
+                )
+            else:
+                result["messages"].append(
+                    f"{stage}: already up to date with the IMEA series API (latest local {latest_local_label}, API index {latest_api_label})."
+                )
 
     if hasattr(load_progress_file, "clear"):
         load_progress_file.clear()
@@ -500,6 +560,10 @@ def build_crop_progress_chart(df: pd.DataFrame, location: str) -> go.Figure:
         stage_df = plot_df[plot_df["stage"] == stage].copy()
         if stage_df.empty:
             continue
+        if stage == "Harvest":
+            stage_df = stage_df[stage_df["data"].dt.year >= stage_df["safra_start_year"] + 1].copy()
+            if stage_df.empty:
+                continue
 
         current = stage_df[stage_df["safra_start_year"] == current_start_year].copy()
         prior = stage_df[
@@ -740,15 +804,19 @@ def render_mato_grosso():
     st.subheader("Crop Progress")
 
     if st.button("Check IMEA updates", key="mato_grosso_update_button"):
-        with st.spinner("Checking IMEA crop progress updates..."):
+        with st.spinner("Checking IMEA Mato Grosso updates..."):
             try:
                 update_result = refresh_imea_crop_progress()
                 if update_result["updated"]:
-                    st.success("IMEA crop progress data updated.")
+                    st.success("IMEA Mato Grosso data updated.")
+                elif update_result.get("warnings"):
+                    st.warning("IMEA Mato Grosso data was checked, but at least one series may still be stale.")
                 else:
-                    st.info("IMEA crop progress data is already up to date.")
+                    st.info("IMEA Mato Grosso data is already up to date with the IMEA series API.")
                 for message in update_result["messages"]:
                     st.caption(message)
+                for warning in update_result.get("warnings", []):
+                    st.caption(warning)
             except Exception as exc:
                 st.error(f"IMEA update failed: {exc}")
 
