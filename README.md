@@ -1,4 +1,4 @@
-# USDA Export Sales Dashboard
+# Fundamentals & CoT Dashboard
 
 ## 🚀 Live Demo
 👉 **https://cftc-cot-dashboard.streamlit.app**
