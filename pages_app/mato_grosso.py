@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import tomllib
 import zipfile
 from datetime import date, timedelta
 from pathlib import Path
@@ -18,6 +19,7 @@ from urllib3.exceptions import InsecureRequestWarning
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+SECRETS_PATH = BASE_DIR / ".streamlit" / "secrets.toml"
 PLANTING_PROGRESS_PATH = BASE_DIR / "IMEA" / "planting_prog_mt.json"
 HARVEST_PROGRESS_PATH = BASE_DIR / "IMEA" / "harvest_prog_mt.json"
 HARVEST_PROGRESS_FALLBACK_PATH = BASE_DIR / "IMEA" / "harvest_prog_mt.txt"
@@ -47,15 +49,38 @@ STAGE_CONFIG = {
 
 
 def _get_imea_credentials() -> tuple[str | None, str | None]:
-    email = None
-    password = None
+    def _read_mapping(mapping) -> tuple[str | None, str | None]:
+        email = None
+        password = None
+
+        if not mapping:
+            return None, None
+
+        for section_name in ("imea", "IMEA"):
+            imea_secrets = mapping.get(section_name, {})
+            if imea_secrets:
+                email = email or imea_secrets.get("email") or imea_secrets.get("EMAIL")
+                password = password or imea_secrets.get("password") or imea_secrets.get("PASSWORD")
+
+        email = email or mapping.get("IMEA_EMAIL") or mapping.get("imea_email")
+        password = password or mapping.get("IMEA_PASSWORD") or mapping.get("imea_password")
+        return email, password
 
     if hasattr(st, "secrets"):
-        imea_secrets = st.secrets.get("imea", {})
-        email = imea_secrets.get("email") or st.secrets.get("IMEA_EMAIL")
-        password = imea_secrets.get("password") or st.secrets.get("IMEA_PASSWORD")
+        email, password = _read_mapping(st.secrets)
+        if email and password:
+            return email, password
 
-    return email or os.getenv("IMEA_EMAIL"), password or os.getenv("IMEA_PASSWORD")
+    email = os.getenv("IMEA_EMAIL")
+    password = os.getenv("IMEA_PASSWORD")
+    if email and password:
+        return email, password
+
+    if SECRETS_PATH.exists():
+        with SECRETS_PATH.open("rb") as fh:
+            email, password = _read_mapping(tomllib.load(fh))
+
+    return email, password
 
 
 def _read_json_records(path: Path) -> list[dict]:
@@ -75,7 +100,7 @@ def _write_json_records(path: Path, records: list[dict]) -> None:
 def _login_imea() -> str:
     email, password = _get_imea_credentials()
     if not email or not password:
-        raise RuntimeError("IMEA credentials are missing from Streamlit secrets.")
+        raise RuntimeError("IMEA credentials are missing from Streamlit secrets or environment variables.")
 
     response = _imea_request(
         "post",
@@ -798,7 +823,7 @@ def render_mato_grosso():
     email, password = _get_imea_credentials()
     if not email or not password:
         st.info(
-            "Add IMEA credentials to `.streamlit/secrets.toml` before enabling automatic data updates."
+            "Add IMEA credentials to Streamlit app secrets before enabling automatic data updates."
         )
 
     st.subheader("Crop Progress")
