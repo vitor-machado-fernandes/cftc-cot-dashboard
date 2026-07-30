@@ -821,14 +821,22 @@ def render_mato_grosso():
     st.header("Mato Grosso")
 
     email, password = _get_imea_credentials()
-    if not email or not password:
+    imea_credentials_available = bool(email and password)
+    if not imea_credentials_available:
         st.info(
             "Add IMEA credentials to Streamlit app secrets before enabling automatic data updates."
         )
 
     st.subheader("Crop Progress")
 
-    if st.button("Check IMEA updates", key="mato_grosso_update_button"):
+    if st.button(
+        "Check IMEA updates",
+        key="mato_grosso_update_button",
+        disabled=not imea_credentials_available,
+    ):
+        if not imea_credentials_available:
+            st.warning("IMEA credentials are required before checking for updates.")
+            return
         with st.spinner("Checking IMEA Mato Grosso updates..."):
             try:
                 update_result = refresh_imea_crop_progress()

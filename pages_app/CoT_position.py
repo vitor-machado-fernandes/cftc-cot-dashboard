@@ -344,7 +344,7 @@ def render_position():
         plot_df=plot_df,
         selected_years=selected_years,
         value_col="net",
-        title="Net Position",
+        title=f"{commodity} - {trader} Net Position",
         show_avg=show_avg,
         show_band=show_band,
         ref_band=net_band,

@@ -1,0 +1,18 @@
+{
+  "updated_at": "2026-04-08T15:13:52",
+  "target_year": 2024,
+  "class_code": 2,
+  "crop_name": "Cotton",
+  "state_count": 1,
+  "states": [
+    "VA"
+  ],
+  "download_sources": {
+    "VA": "https://nassgeodata.gmu.edu/webservice/nass_data_cache/byfips/CDL_2024_51.tif"
+  },
+  "summary_file": "C:\\Temp\\weather-monitor\\data\\processed\\cdl_cotton_footprint_summary.parquet",
+  "notes": [
+    "This is a latest-year cotton footprint summary by state raster.",
+    "It is intended to define the fixed crop area that later PRISM aggregation will use."
+  ]
+}

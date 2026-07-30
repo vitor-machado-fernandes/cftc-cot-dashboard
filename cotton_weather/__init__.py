@@ -1,0 +1,2 @@
+"""Cotton weather monitor package."""
+

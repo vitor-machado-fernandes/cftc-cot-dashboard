@@ -1,0 +1,19 @@
+{
+  "crop_name": "Cotton",
+  "class_code": 2,
+  "target_year": 2024,
+  "source_portal": "https://croplandcros.scinet.usda.gov/",
+  "source_metadata": "https://www.nass.usda.gov/Research_and_Science/Cropland/metadata/metadata_Cropland-Data-Layer-2024.htm",
+  "source_faq": "https://data.nass.usda.gov/Research_and_Science/Cropland/sarsfaqs2.php",
+  "conus_full_coverage_start_year": 2008,
+  "methodology": "Use the most recent USDA NASS Cropland Data Layer raster as the crop-footprint base. Download state CDL rasters for cotton-producing states, filter pixels with class code 2 (Cotton), and use the resulting cotton mask as the fixed footprint for PRISM aggregation.",
+  "geometry_type": "Raster-derived cotton mask",
+  "status": "planned",
+  "created_at": "2026-04-08T15:09:30",
+  "notes": [
+    "The CDL class available in official metadata is 'Cotton' (code 2).",
+    "The official CDL class list reviewed here does not distinguish upland cotton from pima cotton.",
+    "For this project we will initially treat the latest CDL Cotton class as a proxy for upland cotton unless a better separating dataset is added.",
+    "The weather history can be overlaid on one fixed recent-year cotton footprint, which avoids having to rebuild crop area for every historical year."
+  ]
+}

@@ -35,6 +35,7 @@ from pages_app.concentration import render_concentration
 from pages_app.crop_progress_condition import render_crop_progress_condition
 from pages_app.mato_grosso import render_mato_grosso
 from pages_app.stocks_use import render_stocks_use
+from pages_app.weather import render_weather
 
 
 def render_home():
@@ -59,6 +60,7 @@ def render_home():
         - `Open Interest`: Explores open interest trends and seasonal patterns.
         - `Position`: Displays long, short, spread, and net positioning by trader category.
         - `Stocks & Use`: Tracks supply, demand, stocks, and use data.
+        - `Weather`
         """
     )
 
@@ -196,6 +198,7 @@ page = st.sidebar.radio(
         "Open Interest",
         "Position",
         "Stocks & Use",
+        "Weather",
     ],
 )
 
@@ -220,4 +223,6 @@ elif page == "Mato Grosso":
     render_mato_grosso()
 elif page == "Stocks & Use":
     render_stocks_use()
+elif page == "Weather":
+    render_weather()
 
