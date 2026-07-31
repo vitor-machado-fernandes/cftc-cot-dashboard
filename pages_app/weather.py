@@ -274,10 +274,20 @@ def _render_precipitation_map():
         cdl_preview = _load_cached_footprint_preview("none", _preview_signature("none"))
         if not cdl_preview.empty:
             _add_plain_footprint_overlay(precip_map, cdl_preview)
+        else:
+            st.warning(
+                "Cotton footprint overlay data was not found. "
+                "Expected a `data/processed/cdl_preview_cache/*12000_50_none*.parquet` file."
+            )
     elif overlay_choice == "Rainfed / irrigated footprint":
         county_preview = _load_cached_footprint_preview("county_share", _preview_signature("county_share"))
         if not county_preview.empty:
             _add_county_share_footprint_overlay(precip_map, county_preview)
+        else:
+            st.warning(
+                "Rainfed / irrigated footprint overlay data was not found. "
+                "Expected a `data/processed/cdl_preview_cache/*12000_50_county_share*.parquet` file."
+            )
 
     precip_map.update_layout(height=540)
     st.plotly_chart(precip_map, use_container_width=True, config={"scrollZoom": False})
