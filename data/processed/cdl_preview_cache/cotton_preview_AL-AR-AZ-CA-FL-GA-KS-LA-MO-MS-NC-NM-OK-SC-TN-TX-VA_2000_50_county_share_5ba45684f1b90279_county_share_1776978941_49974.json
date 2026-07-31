@@ -1,0 +1,27 @@
+{
+  "created_at": "2026-04-23T16:18:15",
+  "signature": "5ba45684f1b90279",
+  "rows": 2210,
+  "states": [
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "FL",
+    "GA",
+    "KS",
+    "LA",
+    "MO",
+    "MS",
+    "NC",
+    "NM",
+    "OK",
+    "SC",
+    "TN",
+    "TX",
+    "VA"
+  ],
+  "max_total_points": 2000,
+  "min_points_per_state": 50,
+  "irrigation_mode": "county_share"
+}

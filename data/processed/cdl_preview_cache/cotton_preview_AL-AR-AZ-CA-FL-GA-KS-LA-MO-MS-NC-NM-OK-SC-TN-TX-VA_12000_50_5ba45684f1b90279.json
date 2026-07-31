@@ -1,0 +1,26 @@
+{
+  "created_at": "2026-04-09T15:59:26",
+  "signature": "5ba45684f1b90279",
+  "rows": 12000,
+  "states": [
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "FL",
+    "GA",
+    "KS",
+    "LA",
+    "MO",
+    "MS",
+    "NC",
+    "NM",
+    "OK",
+    "SC",
+    "TN",
+    "TX",
+    "VA"
+  ],
+  "max_total_points": 12000,
+  "min_points_per_state": 50
+}

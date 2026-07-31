@@ -1,7 +1,6 @@
 .streamlit/secrets.toml
 __pycache__/
 pages_app/__pycache__/
-data/processed/cdl_preview_cache/
 data/processed/wpc_qpf_cache/
 data/processed/wpc_qpf_images/
 data/raw/
