@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import urljoin
 
+import requests
+import urllib3
+from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -22,6 +26,7 @@ from cotton_weather.precip_maps import (
 
 FORECAST_WINDOW = "Next 7 days"
 FOOTPRINT_STATES = "AL-AR-AZ-CA-FL-GA-KS-LA-MO-MS-NC-NM-OK-SC-TN-TX-VA"
+DROUGHT_MONITOR_URL = "https://droughtmonitor.unl.edu/"
 
 
 def _file_signature(path: Path) -> tuple:
@@ -72,6 +77,52 @@ def _load_forecast_map(product_label: str) -> tuple[dict, pd.DataFrame, dict]:
 @st.cache_data(ttl=1800)
 def _load_forecast_image(image_url: str) -> bytes:
     return ensure_wpc_qpf_image(image_url).read_bytes()
+
+
+def _get_with_ssl_fallback(url: str, timeout: int = 30) -> requests.Response:
+    last_error: Exception | None = None
+    for trust_env in (True, False):
+        for verify in (True, False):
+            session = requests.Session()
+            session.trust_env = trust_env
+            try:
+                if not verify:
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                response = session.get(url, timeout=timeout, verify=verify)
+                response.raise_for_status()
+                return response
+            except (requests.exceptions.ProxyError, requests.exceptions.SSLError) as exc:
+                last_error = exc
+            finally:
+                session.close()
+
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"Could not fetch {url}")
+
+
+@st.cache_data(ttl=21600)
+def _load_drought_monitor_image() -> tuple[bytes, dict]:
+    response = _get_with_ssl_fallback(DROUGHT_MONITOR_URL)
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    png_href = None
+    for link in soup.find_all("a", href=True):
+        href = link["href"]
+        if "/data/png/" in href and href.lower().endswith("_usdm.png"):
+            png_href = href
+            break
+
+    if png_href is None:
+        raise ValueError("Could not find the current U.S. Drought Monitor PNG link.")
+
+    image_url = urljoin(DROUGHT_MONITOR_URL, png_href)
+    image_response = _get_with_ssl_fallback(image_url)
+
+    page_text = soup.get_text("\n", strip=True)
+    released = next((line.replace("Map released:", "").strip() for line in page_text.splitlines() if line.startswith("Map released:")), "")
+    valid = next((line.replace("Data valid:", "").strip() for line in page_text.splitlines() if line.startswith("Data valid:")), "")
+    return image_response.content, {"image_url": image_url, "released": released, "valid": valid}
 
 
 @st.cache_data(ttl=300)
@@ -187,24 +238,49 @@ def _add_county_share_footprint_overlay(base_figure, preview_df: pd.DataFrame):
 
 def _render_forecast_map():
     st.subheader("Forecast Map")
+    image_url = WPC_QPF_IMAGE_URLS[FORECAST_WINDOW]
     try:
-        _, forecast_records, forecast_meta = _load_forecast_map(FORECAST_WINDOW)
+        forecast_image = _load_forecast_image(image_url)
     except Exception as exc:
-        st.error(f"Could not load NOAA WPC 7-day forecast data: {exc}")
+        st.error(f"Could not load the NOAA WPC 7-day forecast map: {exc}")
         return
 
-    image_url = WPC_QPF_IMAGE_URLS[FORECAST_WINDOW]
-    st.image(_load_forecast_image(image_url), use_container_width=True)
+    forecast_records = pd.DataFrame()
+    forecast_meta = {}
+    try:
+        _, forecast_records, forecast_meta = _load_forecast_map(FORECAST_WINDOW)
+    except Exception:
+        pass
+
+    st.image(forecast_image, use_container_width=True)
     max_qpf_in = float(forecast_records["qpf"].max()) if not forecast_records.empty else None
     max_qpf_mm = _inches_to_mm(max_qpf_in)
-    caption = (
-        "NOAA WPC 7-day accumulated precipitation outlook. "
-        f"Valid window: {forecast_meta.get('valid_time')}. "
-        f"Issued: {forecast_meta.get('issue_time')}."
-    )
+    caption = "NOAA WPC 7-day accumulated precipitation outlook."
+    if forecast_meta:
+        caption = (
+            f"{caption} Valid window: {forecast_meta.get('valid_time')}. "
+            f"Issued: {forecast_meta.get('issue_time')}."
+        )
     if max_qpf_mm is not None:
         caption = f"{caption} Highest contour shown is about {max_qpf_mm:,.0f} mm."
     st.caption(caption)
+
+
+def _render_drought_monitor_map():
+    st.subheader("U.S. Drought Monitor")
+    try:
+        image_bytes, image_meta = _load_drought_monitor_image()
+    except Exception as exc:
+        st.error(f"Could not load the U.S. Drought Monitor map: {exc}")
+        return
+
+    st.image(image_bytes, use_container_width=True)
+    caption_parts = []
+    if image_meta.get("released"):
+        caption_parts.append(f"Released: {image_meta['released']}.")
+    if image_meta.get("valid"):
+        caption_parts.append(f"Valid: {image_meta['valid']}.")
+    st.caption(" ".join(caption_parts))
 
 
 def _render_precipitation_map():
@@ -302,5 +378,9 @@ def _render_precipitation_map():
 
 def render_weather():
     st.header("Weather")
-    _render_forecast_map()
+    forecast_col, drought_col = st.columns(2)
+    with forecast_col:
+        _render_forecast_map()
+    with drought_col:
+        _render_drought_monitor_map()
     _render_precipitation_map()

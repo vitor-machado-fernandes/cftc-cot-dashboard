@@ -73,19 +73,34 @@ def _is_stale(path: Path, max_age_hours: int = WPC_REFRESH_HOURS) -> bool:
     return age > timedelta(hours=max_age_hours)
 
 
+def _get_with_network_fallback(url: str, timeout: int = 180, **kwargs) -> requests.Response:
+    last_error: Exception | None = None
+    for trust_env in (True, False):
+        for verify in (True, False):
+            session = requests.Session()
+            session.trust_env = trust_env
+            try:
+                if not verify:
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                response = session.get(url, timeout=timeout, verify=verify, **kwargs)
+                response.raise_for_status()
+                return response
+            except (requests.exceptions.ProxyError, requests.exceptions.SSLError) as exc:
+                last_error = exc
+            finally:
+                session.close()
+
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"Could not fetch {url}")
+
+
 def _download_tar(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temp_path = destination.with_suffix(destination.suffix + ".part")
     try:
-        try:
-            with requests.get(url, timeout=180) as response:
-                response.raise_for_status()
-                temp_path.write_bytes(response.content)
-        except requests.exceptions.SSLError:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            with requests.get(url, timeout=180, verify=False) as response:
-                response.raise_for_status()
-                temp_path.write_bytes(response.content)
+        response = _get_with_network_fallback(url)
+        temp_path.write_bytes(response.content)
         temp_path.replace(destination)
     finally:
         if temp_path.exists():
@@ -96,17 +111,8 @@ def _download_binary(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temp_path = destination.with_suffix(destination.suffix + ".part")
     try:
-        try:
-            with requests.get(url, timeout=180) as response:
-                response.raise_for_status()
-                temp_path.write_bytes(response.content)
-        except requests.exceptions.SSLError:
-            # Some Windows environments fail cert validation against WPC even though the
-            # content is otherwise reachable. Restrict the fallback to these forecast images.
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            with requests.get(url, timeout=180, verify=False) as response:
-                response.raise_for_status()
-                temp_path.write_bytes(response.content)
+        response = _get_with_network_fallback(url)
+        temp_path.write_bytes(response.content)
         temp_path.replace(destination)
     finally:
         if temp_path.exists():
@@ -152,7 +158,11 @@ def ensure_wpc_qpf_image(image_url: str) -> Path:
     file_name = image_url.rstrip("/").split("/")[-1]
     destination = WPC_QPF_IMAGE_CACHE_DIR / file_name
     if _is_stale(destination):
-        _download_binary(image_url, destination)
+        try:
+            _download_binary(image_url, destination)
+        except requests.exceptions.RequestException:
+            if not destination.exists():
+                raise
     return destination
 
 
@@ -273,12 +283,7 @@ def load_wpc_qpf_mapserver_geojson(product_label: str) -> tuple[dict, pd.DataFra
         "returnGeometry": "true",
         "f": "geojson",
     }
-    try:
-        response = requests.get(query_url, params=query_params, timeout=180)
-    except requests.exceptions.SSLError:
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        response = requests.get(query_url, params=query_params, timeout=180, verify=False)
-    response.raise_for_status()
+    response = _get_with_network_fallback(query_url, params=query_params)
     geojson = response.json()
 
     records = []
