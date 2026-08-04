@@ -5,5 +5,9 @@
   "start_date": "2026-08-02",
   "grid_points": 5221,
   "downsample_factor": 28,
+<<<<<<< HEAD
   "cache_file": "C:\\Users\\vfernandes\\Documents\\Projects\\cftc-cot-dashboard\\data\\processed\\prism_map_previews\\prism_ppt_1day_2026-08-02_ds28_min0p1.parquet"
+=======
+  "cache_file": "/home/runner/work/cftc-cot-dashboard/cftc-cot-dashboard/data/processed/prism_map_previews/prism_ppt_1day_2026-08-02_ds28_min0p1.parquet"
+>>>>>>> 83eb7f3f54cf121cf2ece88078cece1e2e71d727
 }
