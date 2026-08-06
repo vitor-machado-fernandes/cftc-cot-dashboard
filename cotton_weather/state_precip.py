@@ -9,7 +9,7 @@ import pandas as pd
 import rasterio
 from rasterio.warp import Resampling, reproject
 
-from cotton_weather.cdl import summarize_downloaded_cdl_rasters
+from cotton_weather.cdl import load_cdl_footprint_summary, summarize_downloaded_cdl_rasters
 from cotton_weather.config import (
     CDL_COTTON_CLASS_CODE,
     CDL_RAW_DIR,
@@ -150,12 +150,16 @@ def _cdl_raster_path(state_abbr: str, footprint_year: int) -> Path:
     return CDL_RAW_DIR / str(footprint_year) / f"{state_abbr.lower()}_{footprint_year}_cdl.tif"
 
 
+def _state_weight_path(state_abbr: str, footprint_year: int) -> Path:
+    return STATE_WEIGHT_DIR / str(footprint_year) / f"{state_abbr.lower()}_prism_weights.tif"
+
+
 def ensure_state_prism_weights(
     state_abbr: str,
     prism_tif_path: Path,
     footprint_year: int = 2024,
 ) -> Path:
-    weight_path = STATE_WEIGHT_DIR / str(footprint_year) / f"{state_abbr.lower()}_prism_weights.tif"
+    weight_path = _state_weight_path(state_abbr, footprint_year)
     if weight_path.exists():
         return weight_path
 
@@ -201,19 +205,23 @@ def aggregate_state_precipitation_for_day(
     selected_states = _normalize_states(states)
     prism_asset = ensure_prism_asset(variable="ppt", date_value=date_value, raw_dir=RAW_DIR)
     state_area = summarize_downloaded_cdl_rasters(year=footprint_year)
+    if state_area.empty:
+        state_area = load_cdl_footprint_summary()
     area_lookup = state_area.set_index("state")["cotton_area_acres_est"].to_dict() if not state_area.empty else {}
 
     rows: list[dict] = []
     with rasterio.open(prism_asset.tif_path) as prism_ds:
         ppt_band = prism_ds.read(1, masked=True)
         for state_abbr in selected_states:
-            if not _cdl_raster_path(state_abbr, footprint_year).exists():
+            weight_path = _state_weight_path(state_abbr, footprint_year)
+            if not weight_path.exists() and not _cdl_raster_path(state_abbr, footprint_year).exists():
                 continue
-            weight_path = ensure_state_prism_weights(
-                state_abbr=state_abbr,
-                prism_tif_path=prism_asset.tif_path,
-                footprint_year=footprint_year,
-            )
+            if not weight_path.exists():
+                weight_path = ensure_state_prism_weights(
+                    state_abbr=state_abbr,
+                    prism_tif_path=prism_asset.tif_path,
+                    footprint_year=footprint_year,
+                )
             with rasterio.open(weight_path) as weight_ds:
                 weights = weight_ds.read(1, masked=True)
 
@@ -236,7 +244,7 @@ def aggregate_state_precipitation_for_day(
                     "ppt_mm": weighted_mean,
                     "wet_cell_share": wet_share,
                     "prism_weight_sum": weight_sum,
-                    "cotton_area_acres_est": area_lookup.get(state_abbr),
+                    "cotton_area_acres_est": area_lookup.get(state_abbr, weight_sum if weight_sum > 0 else None),
                 }
             )
 

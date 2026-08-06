@@ -12,6 +12,12 @@ if (-not $PythonExe) {
 }
 
 Set-Location $ProjectRoot
+& $PythonExe "scripts/update_state_precip.py" --history-days 45 --reprocess-days 14 --footprint-year 2024
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "CoT cotton-state precipitation refresh failed."
+    exit $LASTEXITCODE
+}
+
 & $PythonExe "scripts/refresh_weather_maps.py" --history-days 21
 if ($LASTEXITCODE -ne 0) {
     Write-Error "CoT weather map refresh failed."

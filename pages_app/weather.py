@@ -11,7 +11,12 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from cotton_weather.config import PROCESSED_DIR, RAW_DIR
+from cotton_weather.config import (
+    PROCESSED_DIR,
+    RAW_DIR,
+    STATE_PRECIP_FILE,
+    STATE_PRECIP_METADATA_FILE,
+)
 from cotton_weather.forecast_qpf import (
     WPC_QPF_IMAGE_URLS,
     ensure_wpc_qpf_image,
@@ -22,6 +27,12 @@ from cotton_weather.precip_maps import (
     available_cached_map_windows,
     load_precipitation_map_preview_cached,
 )
+from cotton_weather.state_precip import (
+    load_state_precipitation_data,
+    load_state_precipitation_metadata,
+    load_state_precipitation_progress,
+)
+from cotton_weather.state_precip_section import render_cotton_state_precipitation
 
 
 FORECAST_WINDOW = "Next 7 days"
@@ -67,6 +78,13 @@ def _latest_preview_cache(irrigation_mode: str) -> Path | None:
 
 def _preview_signature(irrigation_mode: str) -> tuple:
     return _file_signature(_latest_preview_cache(irrigation_mode) or Path("__missing__"))
+
+
+def _state_precip_signature() -> tuple:
+    return (
+        _file_signature(STATE_PRECIP_FILE),
+        _file_signature(STATE_PRECIP_METADATA_FILE),
+    )
 
 
 @st.cache_data(ttl=1800)
@@ -128,9 +146,8 @@ def _load_drought_monitor_image() -> tuple[bytes, dict]:
 @st.cache_data(ttl=300)
 def _load_precip_window_dates(window_days: int, _preview_signature: tuple, _prism_signature: tuple) -> list[str]:
     cached_dates = available_cached_map_windows(window_days=window_days)
-    if cached_dates:
-        return [value.isoformat() for value in cached_dates]
-    return [value.isoformat() for value in available_map_windows(window_days=window_days)]
+    raw_dates = available_map_windows(window_days=window_days)
+    return [value.isoformat() for value in sorted(set(cached_dates).union(raw_dates))]
 
 
 @st.cache_data(ttl=300)
@@ -155,6 +172,21 @@ def _load_cached_footprint_preview(irrigation_mode: str, _signature: tuple) -> p
     if cache_path is None:
         return pd.DataFrame()
     return pd.read_parquet(cache_path)
+
+
+@st.cache_data(ttl=900)
+def _load_state_precip_data(_signature: tuple) -> pd.DataFrame:
+    return load_state_precipitation_data()
+
+
+@st.cache_data(ttl=900)
+def _load_state_precip_meta(_signature: tuple) -> dict:
+    return load_state_precipitation_metadata()
+
+
+@st.cache_data(ttl=30)
+def _load_state_precip_progress() -> dict:
+    return load_state_precipitation_progress()
 
 
 def _inches_to_mm(value: float | int | None) -> float | None:
@@ -301,12 +333,14 @@ def _render_precipitation_map():
         st.info(f"No complete {window_days}-day national PRISM precipitation window is currently available on disk.")
         return
 
+    latest_window_end_date = window_end_dates[-1]
+    st.caption(f"Latest complete local PRISM window ends on {latest_window_end_date}.")
     with end_date_col:
         selected_end_date = st.selectbox(
             "Map end date",
             options=list(reversed(window_end_dates)),
             index=0,
-            key=f"cot_precip_map_end_{window_days}",
+            key=f"cot_precip_map_end_{window_days}_{latest_window_end_date}",
         )
     try:
         precip_map_df, precip_map_meta = _load_precip_map_preview(
@@ -384,3 +418,10 @@ def render_weather():
     with drought_col:
         _render_drought_monitor_map()
     _render_precipitation_map()
+    state_precip_signature = _state_precip_signature()
+    render_cotton_state_precipitation(
+        state_precip=_load_state_precip_data(state_precip_signature),
+        state_precip_meta=_load_state_precip_meta(state_precip_signature),
+        state_precip_progress=_load_state_precip_progress(),
+        key_prefix="weather_cotton_state_precip",
+    )
