@@ -25,8 +25,8 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Refresh weather map previews
-        run: python scripts/refresh_weather_maps.py --history-days 21 --preview-end-dates 7
+      - name: Refresh PRISM map previews
+        run: python scripts/refresh_weather_maps.py --history-days 21 --preview-end-dates 7 --skip-wpc
 
       - name: Commit updated PRISM previews
         run: |

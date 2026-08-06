@@ -95,7 +95,16 @@ def load_precipitation_map_preview_cached(
         min_precip_mm=min_precip_mm,
     )
     if preview_path.exists() and meta_path.exists():
-        return pd.read_parquet(preview_path), json.loads(meta_path.read_text(encoding="utf-8"))
+        try:
+            return pd.read_parquet(preview_path), json.loads(meta_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            if not build_if_missing:
+                return pd.DataFrame(), {
+                    "window_days": window_days,
+                    "available": False,
+                    "end_date": end_date.isoformat(),
+                    "cache_file": str(preview_path),
+                }
 
     if not build_if_missing:
         return pd.DataFrame(), {

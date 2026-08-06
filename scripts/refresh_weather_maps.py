@@ -29,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--history-days", type=int, default=21, help="Recent PRISM days to keep refreshed.")
     parser.add_argument("--end-date", type=date.fromisoformat, default=None, help="Optional PRISM end date (YYYY-MM-DD).")
     parser.add_argument("--preview-end-dates", type=int, default=7, help="Recent valid end dates to prebuild per map window.")
+    parser.add_argument("--skip-wpc", action="store_true", help="Skip NOAA/WPC forecast map cache refresh.")
     return parser.parse_args()
 
 
@@ -47,8 +48,15 @@ def main() -> None:
             continue
         prism_assets.append(asset)
 
-    wpc_paths = refresh_wpc_qpf_image_cache()
     preview_meta = prebuild_precipitation_map_previews(recent_end_dates=args.preview_end_dates)
+    if args.skip_wpc:
+        wpc_paths = []
+    else:
+        try:
+            wpc_paths = refresh_wpc_qpf_image_cache()
+        except Exception as exc:
+            wpc_paths = []
+            print(f"NOAA/WPC refresh failed after PRISM previews were built: {exc}")
 
     print("CoT weather map refresh completed.")
     print(f"PRISM ppt assets available: {len(prism_assets)}")
