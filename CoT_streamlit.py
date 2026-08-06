@@ -36,6 +36,7 @@ from pages_app.crop_progress_condition import render_crop_progress_condition
 from pages_app.mato_grosso import render_mato_grosso
 from pages_app.stocks_use import render_stocks_use
 from pages_app.weather import render_weather
+from pages_app.ndvi_index import render_ndvi_index
 
 
 def render_home():
@@ -55,6 +56,7 @@ def render_home():
         - `Concentration`: Shows how concentrated long and short exposure is among the largest traders.
         - `Crop Progress & Condition`: Tracks USDA weekly planting, development, and crop-condition data.
         - `Mato Grosso`: Tracks Brazil crop data from IMEA.
+        - `NDVI index`
         - `Number of Traders`: Tracks how many traders are active on the long, short, and spread sides.
         - `On-Call`: Focuses on cotton on-call activity, including unfixed sales and purchases.
         - `Open Interest`: Explores open interest trends and seasonal patterns.
@@ -193,6 +195,7 @@ page = st.sidebar.radio(
         "Concentration",
         "Crop Progress & Condition",
         "Mato Grosso",
+        "NDVI index",
         "Number of Traders",
         "On-Call",
         "Open Interest",
@@ -221,6 +224,8 @@ elif page == "Crop Progress & Condition":
     render_crop_progress_condition()
 elif page == "Mato Grosso":
     render_mato_grosso()
+elif page == "NDVI index":
+    render_ndvi_index()
 elif page == "Stocks & Use":
     render_stocks_use()
 elif page == "Weather":
