@@ -118,7 +118,7 @@ def render_cotton_state_precipitation(
 ) -> None:
     st.subheader("Cotton-State Precipitation")
 
-    if state_precip_progress:
+    if state_precip_progress and state_precip_progress.get("phase") != "completed":
         phase = state_precip_progress.get("phase", "unknown")
         current_day = int(state_precip_progress.get("current_day", 0))
         total_days = int(state_precip_progress.get("total_days", 0))
@@ -141,18 +141,6 @@ def render_cotton_state_precipitation(
         [int(year) for year in state_precip_dates.dt.year.unique() if int(year) < current_year_available]
     )
 
-    geography = st.selectbox(
-        "Seasonal comparison geography",
-        options=["National"] + list(REGION_STATES.keys()) + available_states,
-        index=0,
-        key=f"{key_prefix}_geography",
-    )
-    st.caption(
-        "Regional definitions: Delta = AR, TN, MO, MS, AL, LA; "
-        "Southeast = GA, FL, SC, NC, VA; "
-        "Southwest = TX, OK, KS, NM; Far West = AZ, CA."
-    )
-
     comparison_options: list[tuple[str, int | None]] = []
     for years in [10, 15, 20]:
         if len(available_history_years) >= years:
@@ -161,12 +149,26 @@ def render_cotton_state_precipitation(
         comparison_options.append((f"All available ({len(available_history_years)} years)", None))
 
     comparison_label_to_value = dict(comparison_options)
-    comparison_label = st.selectbox(
-        "Historical comparison window",
-        options=list(comparison_label_to_value.keys()),
-        index=0 if comparison_options else None,
-        key=f"{key_prefix}_comparison_window",
-    ) if comparison_options else None
+    geography_col, comparison_col = st.columns(2)
+    with geography_col:
+        geography = st.selectbox(
+            "Seasonal comparison geography",
+            options=["National"] + list(REGION_STATES.keys()) + available_states,
+            index=0,
+            key=f"{key_prefix}_geography",
+        )
+    with comparison_col:
+        comparison_label = st.selectbox(
+            "Historical comparison window",
+            options=list(comparison_label_to_value.keys()),
+            index=0 if comparison_options else None,
+            key=f"{key_prefix}_comparison_window",
+        ) if comparison_options else None
+    st.caption(
+        "Regional definitions: Delta = AR, TN, MO, MS, AL, LA; "
+        "Southeast = GA, FL, SC, NC, VA; "
+        "Southwest = TX, OK, KS, NM; Far West = AZ, CA."
+    )
 
     seasonal_df, seasonal_meta = build_seasonal_comparison(
         precip_df=state_precip,
