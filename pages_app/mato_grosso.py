@@ -15,7 +15,6 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 import urllib3
-from pages_app.conab_cotton_progress import render_conab_cotton_progress
 from urllib3.exceptions import InsecureRequestWarning
 
 
@@ -820,85 +819,80 @@ def build_farmer_selling_chart(df: pd.DataFrame, location: str) -> go.Figure:
 
 def render_mato_grosso():
     st.header("Mato Grosso")
-    imea_tab, conab_tab = st.tabs(["IMEA", "CONAB"])
 
-    with conab_tab:
-        render_conab_cotton_progress()
+    email, password = _get_imea_credentials()
+    imea_credentials_available = bool(email and password)
+    if not imea_credentials_available:
+        st.info(
+            "Add IMEA credentials to Streamlit app secrets before enabling automatic data updates."
+        )
 
-    with imea_tab:
-            email, password = _get_imea_credentials()
-            imea_credentials_available = bool(email and password)
-            if not imea_credentials_available:
-                st.info(
-                    "Add IMEA credentials to Streamlit app secrets before enabling automatic data updates."
-                )
+    st.subheader("Crop Progress")
 
-            st.subheader("Crop Progress")
+    if st.button(
+        "Check IMEA updates",
+        key="mato_grosso_update_button",
+        disabled=not imea_credentials_available,
+    ):
+        if not imea_credentials_available:
+            st.warning("IMEA credentials are required before checking for updates.")
+            return
+        with st.spinner("Checking IMEA Mato Grosso updates..."):
+            try:
+                update_result = refresh_imea_crop_progress()
+                if update_result["updated"]:
+                    st.success("IMEA Mato Grosso data updated.")
+                elif update_result.get("warnings"):
+                    st.warning("IMEA Mato Grosso data was checked, but at least one series may still be stale.")
+                else:
+                    st.info("IMEA Mato Grosso data is already up to date with the IMEA series API.")
+                for message in update_result["messages"]:
+                    st.caption(message)
+                for warning in update_result.get("warnings", []):
+                    st.caption(warning)
+            except Exception as exc:
+                st.error(f"IMEA update failed: {exc}")
 
-            if st.button(
-                "Check IMEA updates",
-                key="mato_grosso_update_button",
-                disabled=not imea_credentials_available,
-            ):
-                if not imea_credentials_available:
-                    st.warning("IMEA credentials are required before checking for updates.")
-                    return
-                with st.spinner("Checking IMEA Mato Grosso updates..."):
-                    try:
-                        update_result = refresh_imea_crop_progress()
-                        if update_result["updated"]:
-                            st.success("IMEA Mato Grosso data updated.")
-                        elif update_result.get("warnings"):
-                            st.warning("IMEA Mato Grosso data was checked, but at least one series may still be stale.")
-                        else:
-                            st.info("IMEA Mato Grosso data is already up to date with the IMEA series API.")
-                        for message in update_result["messages"]:
-                            st.caption(message)
-                        for warning in update_result.get("warnings", []):
-                            st.caption(warning)
-                    except Exception as exc:
-                        st.error(f"IMEA update failed: {exc}")
+    progress_df, harvest_file_invalid = load_crop_progress()
+    if progress_df.empty:
+        st.warning("No IMEA crop progress data is available locally yet.")
+        return
+    if harvest_file_invalid:
+        st.warning("The saved harvest file is not valid JSON yet; it looks like an IMEA error response.")
 
-            progress_df, harvest_file_invalid = load_crop_progress()
-            if progress_df.empty:
-                st.warning("No IMEA crop progress data is available locally yet.")
-                return
-            if harvest_file_invalid:
-                st.warning("The saved harvest file is not valid JSON yet; it looks like an IMEA error response.")
+    locations = ["Mato Grosso"] + sorted(
+        location for location in progress_df["location"].dropna().unique().tolist() if location != "Mato Grosso"
+    )
+    location = st.selectbox("Location", locations, index=0, key="mato_grosso_crop_progress_location")
 
-            locations = ["Mato Grosso"] + sorted(
-                location for location in progress_df["location"].dropna().unique().tolist() if location != "Mato Grosso"
-            )
-            location = st.selectbox("Location", locations, index=0, key="mato_grosso_crop_progress_location")
+    st.plotly_chart(build_crop_progress_chart(progress_df, location), use_container_width=True)
 
-            st.plotly_chart(build_crop_progress_chart(progress_df, location), use_container_width=True)
+    latest_date = progress_df.loc[progress_df["location"] == location, "data"].max()
+    if pd.notna(latest_date):
+        st.caption(f"Source: IMEA. Latest {location} crop progress observation: {latest_date.date()}.")
 
-            latest_date = progress_df.loc[progress_df["location"] == location, "data"].max()
-            if pd.notna(latest_date):
-                st.caption(f"Source: IMEA. Latest {location} crop progress observation: {latest_date.date()}.")
+    st.subheader("Farmer Selling")
 
-            st.subheader("Farmer Selling")
+    selling_mtime_ns = FARMER_SELLING_PATH.stat().st_mtime_ns if FARMER_SELLING_PATH.exists() else None
+    selling_df = load_farmer_selling(str(FARMER_SELLING_PATH), selling_mtime_ns)
+    if selling_df.empty:
+        st.warning("No IMEA farmer selling data is available locally yet.")
+        return
 
-            selling_mtime_ns = FARMER_SELLING_PATH.stat().st_mtime_ns if FARMER_SELLING_PATH.exists() else None
-            selling_df = load_farmer_selling(str(FARMER_SELLING_PATH), selling_mtime_ns)
-            if selling_df.empty:
-                st.warning("No IMEA farmer selling data is available locally yet.")
-                return
+    selling_locations = ["Mato Grosso"] + sorted(
+        selling_location
+        for selling_location in selling_df["location"].dropna().unique().tolist()
+        if selling_location != "Mato Grosso"
+    )
+    selling_index = selling_locations.index(location) if location in selling_locations else 0
+    selling_location = st.selectbox(
+        "Farmer selling location",
+        selling_locations,
+        index=selling_index,
+        key="mato_grosso_farmer_selling_location",
+    )
+    st.plotly_chart(build_farmer_selling_chart(selling_df, selling_location), use_container_width=True)
 
-            selling_locations = ["Mato Grosso"] + sorted(
-                selling_location
-                for selling_location in selling_df["location"].dropna().unique().tolist()
-                if selling_location != "Mato Grosso"
-            )
-            selling_index = selling_locations.index(location) if location in selling_locations else 0
-            selling_location = st.selectbox(
-                "Farmer selling location",
-                selling_locations,
-                index=selling_index,
-                key="mato_grosso_farmer_selling_location",
-            )
-            st.plotly_chart(build_farmer_selling_chart(selling_df, selling_location), use_container_width=True)
-
-            latest_selling_date = selling_df.loc[selling_df["location"] == selling_location, "data"].max()
-            if pd.notna(latest_selling_date):
-                st.caption(f"Source: IMEA. Latest {selling_location} farmer selling observation: {latest_selling_date.date()}.")
+    latest_selling_date = selling_df.loc[selling_df["location"] == selling_location, "data"].max()
+    if pd.notna(latest_selling_date):
+        st.caption(f"Source: IMEA. Latest {selling_location} farmer selling observation: {latest_selling_date.date()}.")

@@ -32,6 +32,7 @@ from pages_app.on_call import render_on_call
 from pages_app.n_traders import render_n_traders
 from pages_app.CoT_position import render_position
 from pages_app.concentration import render_concentration
+from pages_app.conab_cotton_progress import render_conab_cotton_progress
 from pages_app.crop_progress_condition import render_crop_progress_condition
 from pages_app.mato_grosso import render_mato_grosso
 from pages_app.stocks_use import render_stocks_use
@@ -54,6 +55,7 @@ def render_home():
         **Sections**
 
         - `Concentration`: Shows how concentrated long and short exposure is among the largest traders.
+        - `CONAB`: Tracks Brazilian cotton planting and harvest progress from CONAB bulletins.
         - `Crop Progress & Condition`: Tracks USDA weekly planting, development, and crop-condition data.
         - `Mato Grosso`: Tracks Brazil crop data from IMEA.
         - `NDVI index`
@@ -193,6 +195,7 @@ page = st.sidebar.radio(
     [
         "Home",
         "Concentration",
+        "CONAB",
         "Crop Progress & Condition",
         "Mato Grosso",
         "NDVI index",
@@ -220,6 +223,8 @@ elif page == "Number of Traders":
     render_n_traders()
 elif page == "Concentration":
     render_concentration()
+elif page == "CONAB":
+    render_conab_cotton_progress()
 elif page == "Crop Progress & Condition":
     render_crop_progress_condition()
 elif page == "Mato Grosso":
