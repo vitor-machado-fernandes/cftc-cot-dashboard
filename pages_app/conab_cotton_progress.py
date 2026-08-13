@@ -23,10 +23,11 @@ def load_conab_progress_data() -> pd.DataFrame:
     return load_data()
 
 
-def run_conab_update() -> int:
+def run_conab_update() -> tuple[int, int, int]:
     latest = latest_bulletin_date()
     stop_after = latest.date() if latest is not None else None
-    bulletins = crawl_bulletins(stop_after_date=stop_after)
+    max_pages = 2 if latest is None else 1
+    bulletins = crawl_bulletins(stop_after_date=stop_after, max_pages=max_pages)
     downloaded = download_bulletins(bulletins, cache_dir=RAW_DIR)
 
     parsed_frames: list[pd.DataFrame] = []
@@ -38,9 +39,10 @@ def run_conab_update() -> int:
         parsed_frames.append(parsed)
 
     if not parsed_frames:
-        return 0
+        return 0, len(bulletins), len(downloaded)
 
-    return upsert_data(pd.concat(parsed_frames, ignore_index=True))
+    new_rows = upsert_data(pd.concat(parsed_frames, ignore_index=True))
+    return new_rows, len(bulletins), len(downloaded)
 
 
 def render_conab_cotton_progress() -> None:
@@ -53,9 +55,20 @@ def render_conab_cotton_progress() -> None:
     if update_clicked:
         try:
             with st.spinner("Checking CONAB bulletins and parsing new workbooks..."):
-                new_rows = run_conab_update()
+                new_rows, bulletin_count, download_count = run_conab_update()
             load_conab_progress_data.clear()
-            status_col.success(f"CONAB update complete. Added {new_rows:,} new records.")
+            if new_rows:
+                status_col.success(
+                    f"CONAB update complete. Added {new_rows:,} new records from {download_count:,} workbook(s)."
+                )
+            elif download_count:
+                status_col.warning(
+                    f"CONAB workbooks were checked ({download_count:,}), but no new cotton rows were added."
+                )
+            else:
+                status_col.warning(
+                    f"No new CONAB workbooks were found on the checked index page(s) ({bulletin_count:,} links)."
+                )
         except Exception as exc:
             LOGGER.exception("CONAB update failed")
             status_col.error(f"CONAB update failed: {exc}")

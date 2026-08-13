@@ -45,11 +45,12 @@ def _url_suffix(url: str) -> str:
 
 
 def _is_workbook_url(url: str) -> bool:
-    return _url_suffix(url) in {".xlsx", ".xls"}
+    path = _ascii_text(urlparse(url).path)
+    return _url_suffix(url) in {".xlsx", ".xls"} or "plantio-e-colheita" in path
 
 
 def _is_attachment_url(url: str) -> bool:
-    return _url_suffix(url) in {".xlsx", ".xls", ".pdf"}
+    return _url_suffix(url) in {".xlsx", ".xls", ".pdf"} or _is_workbook_url(url)
 
 
 def _soup(html: str) -> Any:
@@ -151,6 +152,40 @@ def _find_bulletin_pages(soup: Any, base_url: str) -> list[str]:
     return pages
 
 
+def _extract_index_workbooks(soup: Any, base_url: str) -> list[Bulletin]:
+    """Extract direct Plantio e Colheita workbook links from the paginated index."""
+
+    bulletins: list[Bulletin] = []
+    seen: set[str] = set()
+    for anchor in soup.find_all("a", href=True):
+        text = anchor.get_text(" ", strip=True)
+        lower_text = _ascii_text(text)
+        href = urljoin(base_url, str(anchor["href"]).strip())
+        if not _is_workbook_url(href):
+            continue
+        if "plantio" not in lower_text and "colheita" not in lower_text:
+            continue
+        if href in seen:
+            continue
+
+        heading = anchor.find_previous(["h1", "h2", "h3"])
+        title = heading.get_text(" ", strip=True) if heading else text
+        parent = anchor.find_parent()
+        nearby_text = parent.get_text(" ", strip=True) if parent else text
+        bulletin_date = parse_brazilian_date(f"{title} {nearby_text} {text} {href}")
+        bulletins.append(
+            Bulletin(
+                page_url=base_url,
+                title=title,
+                date_range=text,
+                bulletin_date=bulletin_date,
+                xlsx_url=href,
+            )
+        )
+        seen.add(href)
+    return bulletins
+
+
 def _find_next_page(soup: Any, current_url: str) -> str | None:
     for anchor in soup.find_all("a", href=True):
         text = _ascii_text(anchor.get_text(" ", strip=True))
@@ -218,7 +253,16 @@ def crawl_bulletins(
         saw_stored_bulletin = False
         added_new_bulletin = False
 
-        for page_url in _find_bulletin_pages(soup, url):
+        direct_bulletins = _extract_index_workbooks(soup, url)
+        for bulletin in direct_bulletins:
+            if stop_after_date and bulletin.bulletin_date and bulletin.bulletin_date <= stop_after_date:
+                saw_stored_bulletin = True
+                continue
+            bulletins.append(bulletin)
+            added_new_bulletin = True
+
+        detail_pages = [] if direct_bulletins else _find_bulletin_pages(soup, url)
+        for page_url in detail_pages:
             try:
                 time.sleep(delay_seconds)
                 page_response = _get_with_retries(session, page_url)

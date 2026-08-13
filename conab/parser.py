@@ -18,6 +18,35 @@ STATE_UFS = {
     "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
     "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 }
+STATE_NAME_TO_UF = {
+    "acre": "AC",
+    "alagoas": "AL",
+    "amapa": "AP",
+    "amazonas": "AM",
+    "bahia": "BA",
+    "ceara": "CE",
+    "distrito federal": "DF",
+    "espirito santo": "ES",
+    "goias": "GO",
+    "maranhao": "MA",
+    "mato grosso": "MT",
+    "mato grosso do sul": "MS",
+    "minas gerais": "MG",
+    "para": "PA",
+    "paraiba": "PB",
+    "parana": "PR",
+    "pernambuco": "PE",
+    "piaui": "PI",
+    "rio de janeiro": "RJ",
+    "rio grande do norte": "RN",
+    "rio grande do sul": "RS",
+    "rondonia": "RO",
+    "roraima": "RR",
+    "santa catarina": "SC",
+    "sao paulo": "SP",
+    "sergipe": "SE",
+    "tocantins": "TO",
+}
 
 
 def normalize_text(value: object) -> str:
@@ -61,6 +90,23 @@ def _season_from_date(bulletin_date: date | None) -> str | None:
 def _contains_crop(value: object, crop_terms: tuple[str, ...]) -> bool:
     normalized = normalize_text(value)
     return any(term in normalized for term in crop_terms)
+
+
+def _state_to_uf(value: object) -> str | None:
+    normalized = normalize_text(value)
+    if normalized in STATE_NAME_TO_UF:
+        return STATE_NAME_TO_UF[normalized]
+    state = re.sub(r"[^A-Z]", "", str(value).strip().upper())
+    return state if len(state) == 2 and state in STATE_UFS else None
+
+
+def _date_from_cell(value: object) -> date | None:
+    if value is None or pd.isna(value):
+        return None
+    parsed = pd.to_datetime(value, errors="coerce")
+    if pd.notna(parsed):
+        return parsed.date()
+    return parse_brazilian_date(str(value))
 
 
 def _find_header_row(raw: pd.DataFrame) -> int | None:
@@ -113,9 +159,8 @@ def _parse_tabular_sheet(raw: pd.DataFrame, *, bulletin_date: date | None, crop_
         crop = row.get(lookup["crop"]) if lookup["crop"] else "Algodao"
         if lookup["crop"] and not _contains_crop(crop, crop_terms):
             continue
-        state = str(row.get(lookup["state"], "")).strip().upper()
-        state = re.sub(r"[^A-Z]", "", state)[:2]
-        if state not in STATE_UFS:
+        state = _state_to_uf(row.get(lookup["state"], ""))
+        if state is None:
             continue
         season = _season_from_text(str(row.get(lookup["season"], ""))) if lookup["season"] else None
         season = season or default_season
@@ -183,6 +228,84 @@ def _parse_matrix_sheet(raw: pd.DataFrame, *, bulletin_date: date | None, crop_t
     return pd.DataFrame(rows)
 
 
+def _parse_progress_blocks(
+    raw: pd.DataFrame,
+    *,
+    bulletin_date: date | None,
+    crop_terms: tuple[str, ...],
+) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    row_count = len(raw)
+    for row_idx in range(row_count):
+        row_values = raw.iloc[row_idx].tolist()
+        crop_cells = [value for value in row_values if _contains_crop(value, crop_terms)]
+        if not crop_cells:
+            continue
+
+        crop_name = str(crop_cells[0]).strip()
+        crop_season = _season_from_text(crop_name)
+        operation = None
+        data_start = None
+        date_row = None
+        state_col = None
+        for scan_idx in range(row_idx + 1, min(row_idx + 8, row_count)):
+            scan_values = raw.iloc[scan_idx].tolist()
+            scan_text = " ".join(normalize_text(value) for value in scan_values)
+            if "plantio" in scan_text or "semeadura" in scan_text:
+                operation = "planting_pct"
+            elif "colheita" in scan_text:
+                operation = "harvest_pct"
+            state_cols = [col_idx for col_idx, value in enumerate(scan_values) if normalize_text(value) == "estado"]
+            if state_cols:
+                state_col = state_cols[0]
+                date_row = scan_idx + 2 if scan_idx + 2 < row_count else None
+                data_start = scan_idx + 3 if scan_idx + 3 < row_count else None
+                break
+        if operation is None or date_row is None or data_start is None or state_col is None:
+            continue
+
+        dates_by_col = {
+            col_idx: parsed_date
+            for col_idx, value in enumerate(raw.iloc[date_row].tolist())
+            if (parsed_date := _date_from_cell(value)) is not None
+        }
+        if not dates_by_col and bulletin_date is not None:
+            dates_by_col = {col_idx: bulletin_date for col_idx in range(1, raw.shape[1])}
+
+        for data_idx in range(data_start, row_count):
+            state_cell = raw.iat[data_idx, state_col] if state_col < raw.shape[1] else None
+            if pd.isna(state_cell) or not str(state_cell).strip():
+                break
+            if any(_contains_crop(value, crop_terms) for value in raw.iloc[data_idx].tolist()):
+                break
+            state = _state_to_uf(state_cell)
+            if state is None:
+                continue
+            for col_idx, obs_date in dates_by_col.items():
+                if col_idx >= raw.shape[1]:
+                    continue
+                pct = _parse_pct(raw.iat[data_idx, col_idx])
+                if pct is None:
+                    continue
+                season = crop_season
+                if obs_date is not None:
+                    season = _season_from_date(obs_date)
+                season = season or crop_season or _season_from_date(bulletin_date)
+                if season is None:
+                    continue
+                rows.append(
+                    {
+                        "bulletin_date": obs_date or bulletin_date,
+                        "crop": crop_name,
+                        "state": state,
+                        "season": season,
+                        "planting_pct": pct if operation == "planting_pct" else None,
+                        "harvest_pct": pct if operation == "harvest_pct" else None,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
 def parse_workbook(
     path: str | Path,
     *,
@@ -209,6 +332,7 @@ def parse_workbook(
                 [
                     _parse_tabular_sheet(raw, bulletin_date=bulletin_date, crop_terms=normalized_terms),
                     _parse_matrix_sheet(raw, bulletin_date=bulletin_date, crop_terms=normalized_terms, sheet_name=sheet_name),
+                    _parse_progress_blocks(raw, bulletin_date=bulletin_date, crop_terms=normalized_terms),
                 ]
             )
         except Exception as exc:
