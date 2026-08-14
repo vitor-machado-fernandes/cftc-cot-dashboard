@@ -1,0 +1,9 @@
+{
+  "window_days": 1,
+  "available": true,
+  "end_date": "2026-08-13",
+  "start_date": "2026-08-13",
+  "grid_points": 8618,
+  "downsample_factor": 28,
+  "cache_file": "/home/runner/work/cftc-cot-dashboard/cftc-cot-dashboard/data/processed/prism_map_previews/prism_ppt_1day_2026-08-13_ds28_min0p1.parquet"
+}
