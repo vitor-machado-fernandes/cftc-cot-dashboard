@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 import logging
 from pathlib import Path
 import re
@@ -46,6 +46,15 @@ STATE_NAME_TO_UF = {
     "sao paulo": "SP",
     "sergipe": "SE",
     "tocantins": "TO",
+}
+NATIONAL_STATE_LABELS = {
+    "brasil",
+    "brazil",
+    "total",
+    "total brasil",
+    "total brazil",
+    "nacional",
+    "national",
 }
 
 
@@ -94,19 +103,37 @@ def _contains_crop(value: object, crop_terms: tuple[str, ...]) -> bool:
 
 def _state_to_uf(value: object) -> str | None:
     normalized = normalize_text(value)
+    if normalized in NATIONAL_STATE_LABELS or re.fullmatch(r"\d+\s+estados?", normalized):
+        return "BR"
     if normalized in STATE_NAME_TO_UF:
         return STATE_NAME_TO_UF[normalized]
     state = re.sub(r"[^A-Z]", "", str(value).strip().upper())
     return state if len(state) == 2 and state in STATE_UFS else None
 
 
-def _date_from_cell(value: object) -> date | None:
+def _date_from_cell(value: object, *, reference_date: date | None = None) -> date | None:
     if value is None or pd.isna(value):
         return None
-    parsed = pd.to_datetime(value, errors="coerce")
+    if isinstance(value, (date, datetime, pd.Timestamp)):
+        return pd.to_datetime(value).date()
+
+    text = str(value).strip()
+    short_date = re.fullmatch(r"(\d{1,2})[/-](\d{1,2})", text)
+    if short_date and reference_date is not None:
+        day, month = (int(part) for part in short_date.groups())
+        year = reference_date.year - 1 if month > reference_date.month + 1 else reference_date.year
+        try:
+            return date(year, month, day)
+        except ValueError:
+            return None
+
+    parsed_br_date = parse_brazilian_date(text)
+    if parsed_br_date is not None:
+        return parsed_br_date
+    parsed = pd.to_datetime(value, errors="coerce", dayfirst=True)
     if pd.notna(parsed):
         return parsed.date()
-    return parse_brazilian_date(str(value))
+    return None
 
 
 def _find_header_row(raw: pd.DataFrame) -> int | None:
@@ -267,7 +294,7 @@ def _parse_progress_blocks(
         dates_by_col = {
             col_idx: parsed_date
             for col_idx, value in enumerate(raw.iloc[date_row].tolist())
-            if (parsed_date := _date_from_cell(value)) is not None
+            if (parsed_date := _date_from_cell(value, reference_date=bulletin_date)) is not None
         }
         if not dates_by_col and bulletin_date is not None:
             dates_by_col = {col_idx: bulletin_date for col_idx in range(1, raw.shape[1])}

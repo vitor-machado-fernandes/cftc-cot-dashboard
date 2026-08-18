@@ -36,7 +36,6 @@ from pages_app.conab_cotton_progress import render_conab_cotton_progress
 from pages_app.crop_progress_condition import render_crop_progress_condition
 from pages_app.mato_grosso import render_mato_grosso
 from pages_app.stocks_use import render_stocks_use
-from pages_app.weather import render_weather
 from pages_app.ndvi_index import render_ndvi_index
 
 
@@ -234,5 +233,13 @@ elif page == "NDVI index":
 elif page == "Stocks & Use":
     render_stocks_use()
 elif page == "Weather":
-    render_weather()
+    try:
+        from pages_app.weather import render_weather
+    except ModuleNotFoundError as exc:
+        missing_module = getattr(exc, "name", None) or "a weather dependency"
+        st.error(
+            f"Weather page dependency missing: `{missing_module}`. Install the weather dependencies, then restart the app."
+        )
+    else:
+        render_weather()
 
