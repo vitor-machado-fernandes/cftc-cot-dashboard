@@ -68,12 +68,14 @@ def build_seasonal_comparison(
 
     filtered = daily.loc[daily["year"].isin(selected_years)].copy()
     filtered["month_day"] = filtered["date"].dt.strftime("%m-%d")
-    filtered = filtered.loc[filtered["month_day"] <= cutoff_month_day].copy()
     if filtered.empty:
         return pd.DataFrame(), {}
 
     filtered["cumulative_ppt_mm"] = filtered.groupby("year")["ppt_mm"].cumsum()
     filtered["plot_date"] = pd.to_datetime("2000-" + filtered["month_day"], format="%Y-%m-%d")
+    cutoff_filtered = filtered.loc[filtered["month_day"] <= cutoff_month_day].copy()
+    if cutoff_filtered.empty:
+        return pd.DataFrame(), {}
 
     average_line = (
         filtered.loc[filtered["year"].isin(selected_history)]
@@ -97,7 +99,8 @@ def build_seasonal_comparison(
     daily_change_24h = None
     if len(current_daily) >= 2:
         daily_change_24h = float(current_daily["cumulative_ppt_mm"].iloc[-1] - current_daily["cumulative_ppt_mm"].iloc[-2])
-    average_total = float(average_line["cumulative_ppt_mm"].iloc[-1]) if not average_line.empty else None
+    average_to_cutoff = average_line.loc[average_line["month_day"] <= cutoff_month_day]
+    average_total = float(average_to_cutoff["cumulative_ppt_mm"].iloc[-1]) if not average_to_cutoff.empty else None
 
     return display, {
         "current_year": current_year,
@@ -209,7 +212,7 @@ def render_cotton_state_precipitation(
         },
         title=f"Cumulative cotton-area precipitation: {geography}",
     )
-    seasonal_chart.update_xaxes(dtick="M1", tickformat="%b")
+    seasonal_chart.update_xaxes(dtick="M1", tickformat="%b", range=["2000-01-01", "2000-12-31"])
     seasonal_chart.update_layout(height=460, legend_title_text="Series")
     for trace in seasonal_chart.data:
         if trace.name == average_label:
@@ -220,8 +223,8 @@ def render_cotton_state_precipitation(
             trace.update(line={"width": 1.5}, opacity=0.45)
     st.plotly_chart(seasonal_chart, use_container_width=True)
     st.caption(
-        f"The chart shows {seasonal_meta['current_year']} against the previous "
-        f"{len(seasonal_meta['history_years'])} available years, all cut off at {seasonal_meta['latest_date']}."
+        f"The chart shows {seasonal_meta['current_year']} through {seasonal_meta['latest_date']} "
+        f"against full-year histories from the previous {len(seasonal_meta['history_years'])} available years."
     )
     st.caption(
         f"Processed precipitation coverage currently loaded in the app runs from "
