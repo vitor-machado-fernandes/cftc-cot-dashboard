@@ -26,10 +26,7 @@ st.title("CFTC Commitment of Traders Dashboard")
 
 
 from CoT_updater import run_update_check
-from comexstat_cotton_exports_updater import (
-    refresh_brazil_cotton_exports,
-    refresh_brazil_cotton_weekly_snapshots,
-)
+from comexstat_cotton_exports_updater import refresh_brazil_cotton_exports
 from usda_crop_progress_condition_updater import refresh_crop_progress_condition_data
 from pages_app.open_interest import render_open_interest
 from pages_app.on_call import render_on_call
@@ -224,17 +221,6 @@ if should_run_comexstat_update:
                 )
         except Exception as e:
             st.warning(f"ComexStat Brazilian cotton export update check failed: {e}")
-
-        try:
-            weekly_trade_result = refresh_brazil_cotton_weekly_snapshots(data_dir=".", force=False)
-            if weekly_trade_result["did_update"]:
-                st.success(
-                    "Brazilian weekly preliminary cotton export snapshot updated "
-                    f"for {weekly_trade_result['period']} week {weekly_trade_result['week_of_month']}."
-                )
-        except Exception as e:
-            st.warning(f"MDIC weekly preliminary cotton export update check failed: {e}")
-
 
 # ------------------------------------------------
 # ---- Sidebar navigation ----
