@@ -26,6 +26,10 @@ st.title("CFTC Commitment of Traders Dashboard")
 
 
 from CoT_updater import run_update_check
+from comexstat_cotton_exports_updater import (
+    refresh_brazil_cotton_exports,
+    refresh_brazil_cotton_weekly_snapshots,
+)
 from usda_crop_progress_condition_updater import refresh_crop_progress_condition_data
 from pages_app.open_interest import render_open_interest
 from pages_app.on_call import render_on_call
@@ -185,6 +189,51 @@ if should_run_usda_update:
                 st.info(f"USDA crop progress data already up to date (latest {local_label}).")
         except Exception as e:
             st.warning(f"USDA crop progress update check failed: {e}")
+
+# ------------------------------------------------
+# Run ComexStat Brazil cotton export updater periodically
+# ------------------------------------------------
+COMEXSTAT_UPDATE_CHECK_INTERVAL = timedelta(hours=6)
+last_comexstat_check = st.session_state.get("brazil_cotton_exports_last_checked_at")
+should_run_comexstat_update = (
+    last_comexstat_check is None
+    or datetime.utcnow() - last_comexstat_check >= COMEXSTAT_UPDATE_CHECK_INTERVAL
+)
+
+if should_run_comexstat_update:
+    st.session_state["brazil_cotton_exports_last_checked_at"] = datetime.utcnow()
+
+    with st.spinner("Checking ComexStat Brazilian cotton export updates..."):
+        try:
+            trade_result = refresh_brazil_cotton_exports(data_dir=".", force=False)
+            if trade_result["did_update"]:
+                try:
+                    from pages_app.international_trade import _load_brazil_exports_cached
+
+                    _load_brazil_exports_cached.clear()
+                except Exception:
+                    pass
+                st.success(
+                    "Brazilian cotton export data updated "
+                    f"through {trade_result['remote_latest'] or 'N/A'}."
+                )
+            else:
+                st.info(
+                    "Brazilian cotton export data already up to date "
+                    f"(latest {trade_result['remote_latest'] or 'N/A'})."
+                )
+        except Exception as e:
+            st.warning(f"ComexStat Brazilian cotton export update check failed: {e}")
+
+        try:
+            weekly_trade_result = refresh_brazil_cotton_weekly_snapshots(data_dir=".", force=False)
+            if weekly_trade_result["did_update"]:
+                st.success(
+                    "Brazilian weekly preliminary cotton export snapshot updated "
+                    f"for {weekly_trade_result['period']} week {weekly_trade_result['week_of_month']}."
+                )
+        except Exception as e:
+            st.warning(f"MDIC weekly preliminary cotton export update check failed: {e}")
 
 
 # ------------------------------------------------

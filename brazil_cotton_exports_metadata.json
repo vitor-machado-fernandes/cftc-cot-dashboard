@@ -1,0 +1,18 @@
+{
+  "source": "ComexStat / MDIC",
+  "api_url": "https://api-comexstat.mdic.gov.br/general",
+  "updated_date_url": "https://api-comexstat.mdic.gov.br/general/dates/updated",
+  "flow": "export",
+  "from_period": "2020-01",
+  "to_period": "2026-12",
+  "ncm_codes": [
+    "52010020",
+    "52010090"
+  ],
+  "comexstat_updated_date": "2026-08-06",
+  "comexstat_updated_year": "2026",
+  "comexstat_updated_month_number": "07",
+  "updated_at_utc": "2026-09-02T22:45:35Z",
+  "latest_data_month": "2026-07",
+  "rows": 93
+}
