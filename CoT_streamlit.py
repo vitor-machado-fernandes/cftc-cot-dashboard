@@ -37,6 +37,7 @@ from pages_app.crop_progress_condition import render_crop_progress_condition
 from pages_app.mato_grosso import render_mato_grosso
 from pages_app.stocks_use import render_stocks_use
 from pages_app.ndvi_index import render_ndvi_index
+from pages_app.international_trade import render_international_trade
 
 
 def render_home():
@@ -196,6 +197,7 @@ page = st.sidebar.radio(
         "Concentration",
         "CONAB",
         "Crop Progress & Condition",
+        "International Trade",
         "Mato Grosso",
         "NDVI index",
         "Number of Traders",
@@ -226,6 +228,8 @@ elif page == "CONAB":
     render_conab_cotton_progress()
 elif page == "Crop Progress & Condition":
     render_crop_progress_condition()
+elif page == "International Trade":
+    render_international_trade()
 elif page == "Mato Grosso":
     render_mato_grosso()
 elif page == "NDVI index":
