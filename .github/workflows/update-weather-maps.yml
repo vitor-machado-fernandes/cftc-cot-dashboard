@@ -1,4 +1,4 @@
-name: Update weather map previews
+name: Update weather data
 
 on:
   schedule:
@@ -25,17 +25,23 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Refresh cotton-state precipitation
+        run: python scripts/update_state_precip.py --history-days 45 --reprocess-days 14 --footprint-year 2024
+
       - name: Refresh PRISM map previews
         run: python scripts/refresh_weather_maps.py --history-days 21 --preview-end-dates 7 --skip-wpc
 
-      - name: Commit updated PRISM previews
+      - name: Commit updated weather data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/processed/state_cotton_precipitation.parquet
+          git add data/processed/state_cotton_precipitation_metadata.json
+          git add data/processed/state_cotton_precipitation_progress.json
           git add data/processed/prism_map_previews
           if git diff --cached --quiet; then
-            echo "No PRISM preview changes to commit."
+            echo "No weather data changes to commit."
           else
-            git commit -m "Update PRISM precipitation map previews"
+            git commit -m "Update weather data"
             git push
           fi
