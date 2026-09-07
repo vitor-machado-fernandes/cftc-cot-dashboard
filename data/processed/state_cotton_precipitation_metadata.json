@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-09-06T15:53:48",
-  "requested_start": "2026-08-22",
-  "requested_end": "2026-09-05",
+  "updated_at": "2026-09-07T17:59:56",
+  "requested_start": "2026-08-23",
+  "requested_end": "2026-09-06",
   "rows_written": 124627,
   "dates_processed": 15,
   "states": [
@@ -24,7 +24,9 @@
     "VA"
   ],
   "footprint_year": 2024,
-  "missing_assets": [],
+  "missing_assets": [
+    "2026-09-06"
+  ],
   "dataset_start": "2006-01-01",
   "dataset_end": "2026-09-05"
 }
