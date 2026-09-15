@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-09-14T18:16:09",
-  "requested_start": "2026-08-30",
-  "requested_end": "2026-09-13",
-  "rows_written": 124763,
+  "updated_at": "2026-09-15T17:24:13",
+  "requested_start": "2026-08-31",
+  "requested_end": "2026-09-14",
+  "rows_written": 124780,
   "dates_processed": 15,
   "states": [
     "AL",
@@ -26,5 +26,5 @@
   "footprint_year": 2024,
   "missing_assets": [],
   "dataset_start": "2006-01-01",
-  "dataset_end": "2026-09-13"
+  "dataset_end": "2026-09-14"
 }
