@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 from urllib.parse import urljoin
 
 import requests
@@ -38,6 +40,8 @@ from cotton_weather.state_precip_section import render_cotton_state_precipitatio
 FORECAST_WINDOW = "Next 7 days"
 FOOTPRINT_STATES = "AL-AR-AZ-CA-FL-GA-KS-LA-MO-MS-NC-NM-OK-SC-TN-TX-VA"
 DROUGHT_MONITOR_URL = "https://droughtmonitor.unl.edu/"
+NHC_OUTLOOK_URL = "https://www.nhc.noaa.gov/gtwo.php?basin=atlc&fdays=7"
+NHC_OUTLOOK_IMAGE_URL = "https://www.nhc.noaa.gov/xgtwo/resize/xgtwo_atl_7d0_w1920.png"
 
 
 def _file_signature(path: Path) -> tuple:
@@ -298,6 +302,34 @@ def _render_forecast_map():
     st.caption(caption)
 
 
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def _load_hurricane_outlook_image() -> bytes:
+    response = _get_with_ssl_fallback(NHC_OUTLOOK_IMAGE_URL, timeout=15)
+    # Reject HTML error pages and corrupt downloads before caching the response.
+    with Image.open(BytesIO(response.content)) as image:
+        image.verify()
+    return response.content
+
+
+def _render_hurricane_outlook():
+    st.subheader("Atlantic hurricane outlook")
+    st.markdown(f"[View the latest outlook and storm advisories at NHC]({NHC_OUTLOOK_URL})")
+    try:
+        with st.spinner("Loading the NHC outlook..."):
+            image_bytes = _load_hurricane_outlook_image()
+        st.image(image_bytes, width="stretch")
+    except Exception:
+        st.warning("The NHC outlook image is temporarily unavailable. Use the link above for the latest outlook and advisories.")
+        return
+    st.caption(
+        "Source: NOAA / National Hurricane Center. Seven-day Atlantic tropical weather outlook. "
+        "The issue date and time are printed on the map. "
+        "Checks for a new image when this page is viewed, at most once every 30 minutes. "
+        "Shaded areas indicate cyclone formation potential, not expected rainfall or damage."
+    )
+
+
 def _render_drought_monitor_map():
     st.subheader("U.S. Drought Monitor")
     try:
@@ -417,6 +449,7 @@ def render_weather():
         _render_forecast_map()
     with drought_col:
         _render_drought_monitor_map()
+    _render_hurricane_outlook()
     _render_precipitation_map()
     state_precip_signature = _state_precip_signature()
     render_cotton_state_precipitation(
