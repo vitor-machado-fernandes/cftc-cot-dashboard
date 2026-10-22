@@ -318,7 +318,9 @@ def _render_hurricane_outlook():
     try:
         with st.spinner("Loading the NHC outlook..."):
             image_bytes = _load_hurricane_outlook_image()
-        st.image(image_bytes, width="stretch")
+        _, image_column, _ = st.columns([1, 6, 1], gap=None)
+        with image_column:
+            st.image(image_bytes, width="stretch")
     except Exception:
         st.warning("The NHC outlook image is temporarily unavailable. Use the link above for the latest outlook and advisories.")
         return
@@ -449,7 +451,6 @@ def render_weather():
         _render_forecast_map()
     with drought_col:
         _render_drought_monitor_map()
-    _render_hurricane_outlook()
     _render_precipitation_map()
     state_precip_signature = _state_precip_signature()
     render_cotton_state_precipitation(
@@ -458,3 +459,4 @@ def render_weather():
         state_precip_progress=_load_state_precip_progress(),
         key_prefix="weather_cotton_state_precip",
     )
+    _render_hurricane_outlook()
