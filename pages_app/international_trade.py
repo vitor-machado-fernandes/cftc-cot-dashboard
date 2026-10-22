@@ -140,7 +140,7 @@ def _weekly_partial_chart() -> None:
 
     if weekly.empty:
         st.info(
-            "No weekly preliminary snapshots have been captured yet. The automatic updater will begin storing them when the app can reach MDIC's weekly publication."
+            "MDIC's public weekly publication exposes numbered weeks for total Brazilian trade, but not a product-level weekly cotton row. A weekly cotton chart can be enabled once a product-level weekly source is available."
         )
         return
 

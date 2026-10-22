@@ -1,0 +1,79 @@
+name: Update Brazil cotton exports
+
+on:
+  schedule:
+    # Fridays at 14:23 UTC (09:23 CDT / 08:23 CST).
+    - cron: "23 14 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: brazil-cotton-exports
+  cancel-in-progress: false
+
+jobs:
+  update-brazil-exports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install updater dependencies
+        run: python -m pip install "pandas>=2.1,<3" pyarrow requests beautifulsoup4 urllib3
+
+      - name: Refresh and validate exports
+        shell: python
+        run: |
+          import os
+          import pandas as pd
+          from comexstat_cotton_exports_updater import (
+              load_brazil_cotton_exports,
+              refresh_brazil_cotton_exports,
+          )
+
+          previous = load_brazil_cotton_exports()
+          result = refresh_brazil_cotton_exports()
+          current = load_brazil_cotton_exports()
+          if current.empty:
+              raise RuntimeError("Refusing to commit an empty export dataset.")
+          if current[["date", "ncm_code", "weight_tons"]].isna().any().any():
+              raise RuntimeError("Refusing to commit invalid export rows.")
+          if current.duplicated(["date", "ncm_code"]).any():
+              raise RuntimeError("Refusing to commit duplicate export rows.")
+          if not previous.empty:
+              keys = ["date", "ncm_code"]
+              old_keys = pd.MultiIndex.from_frame(previous[keys])
+              new_keys = pd.MultiIndex.from_frame(current[keys])
+              if not old_keys.isin(new_keys).all():
+                  raise RuntimeError("Refusing to commit a download missing saved export months/codes.")
+          status = "Updated" if result["did_update"] else "Already up to date"
+          message = f"{status}: {len(current)} rows through {current['date'].max():%Y-%m}."
+          print(message)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write(message + "\n")
+
+      - name: Commit updated exports
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add brazil_cotton_exports.parquet brazil_cotton_exports_metadata.json
+          if git diff --cached --quiet; then
+            echo "No Brazil export changes to commit."
+          else
+            git commit -m "Update Brazil cotton exports"
+            git pull --rebase origin "$DEFAULT_BRANCH"
+            git push origin "HEAD:$DEFAULT_BRANCH"
+          fi
